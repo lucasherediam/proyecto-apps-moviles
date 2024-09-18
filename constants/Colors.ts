@@ -1,26 +1,38 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
+const colors = {
+    // primary: "#1E90FF" // Ajustado a DodgerBlue2
+    primary: "#9b45e4", // Ajustado
+    background: "#121212",
+    textPrimary: "#ffffff",
+    textSecondary: "#e0e0e0",
+    buttonPrimary: "#9b45e4", // Ajustado
+    buttonTextPrimary: "#ffffff",
+    buttonSecondary: "#3b3b3b", // Ajustado
+    buttonTextSecondary: "#e0e0e0", // Ajustado
+    border: "#4a4a4a", // Ajustado
+    inactive: "#808080", // Ajustado
+    iconActive: "#9b45e4", // Ajustado
+    iconInactive: "#808080", // Ajustado
+    iconWithActiveBackground: "#ffffff",
+    success: "#4caf50",
+    warning: "#ffeb3b",
+    error: "#f44336",
+    info: "#2196f3",
+    cardBackground: "#2a2a2a", // Ajustado
+    inputBackground: "#3b3b3b", // Ajustado
+    inputText: "#ffffff",
+    placeholder: "#bdbdbd",
+    shadow: "rgba(0, 0, 0, 0.5)",
+    hover: "#6200ea", // Ajustado
+    link: "#82b1ff",
+    white: "#ffffff",
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
-export const Colors = {
-  light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-  },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
-  },
+    // Social Media Colors
+    google: "#db4437",
+    facebook: "#4267B2",
+    twitter: "#1DA1F2",
+    instagram: "#C13584",
+    linkedin: "#0077B5",
+    pinterest: "#E60023",
 };
+
+export default colors;
