@@ -1,13 +1,11 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { BusStopIcon } from '@components/Icons';
-import { Link } from 'expo-router';
-import debounce from 'lodash.debounce'; // Asegúrate de instalar lodash.debounce
+import { router } from 'expo-router';
 const busStopsData: BusStop[] = require('@data/feed-gtfs/stops.json');
 
-// Tipos para los datos de las paradas de autobús
 type BusStop = {
     stop_id: string;
     latitude: number;
@@ -25,8 +23,7 @@ export default function Home() {
     const [loading, setLoading] = useState<boolean>(true);
     const [region, setRegion] = useState<Region | null>(null);
 
-    const maxZoomLevelToShowStops = 0.01;
-    const minZoomLevelToShowStops = 0.001;
+    const minZoomLevelToShowStops = 0.015;
 
     // Obtener la ubicación actual
     useEffect(() => {
@@ -42,46 +39,42 @@ export default function Home() {
             setRegion({
                 latitude: loc.coords.latitude,
                 longitude: loc.coords.longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
+                latitudeDelta: 0.005,
+                longitudeDelta: 0.005,
             });
             setLoading(false); // Solo paramos de cargar cuando tenemos la ubicación
         })();
     }, []);
 
-    // Filtrado de paradas de autobús de forma optimizada
-    const filterBusStops = useCallback(
-        debounce((currentRegion: Region) => {
-            const { latitudeDelta, longitude, latitude, longitudeDelta } =
-                currentRegion;
+    // Memoizar el cálculo de las paradas visibles para no re-renderizar el mapa innecesariamente
+    const filteredBusStops = useMemo(() => {
+        if (!region) return [];
 
-            if (
-                latitudeDelta <= maxZoomLevelToShowStops &&
-                latitudeDelta >= minZoomLevelToShowStops
-            ) {
-                // Limitar el cálculo solo a las paradas más cercanas a la región actual
-                const stopsInView = busStopsData.filter((stop: BusStop) => {
-                    return (
-                        stop.latitude >= latitude - latitudeDelta / 2 &&
-                        stop.latitude <= latitude + latitudeDelta / 2 &&
-                        stop.longitude >= longitude - longitudeDelta / 2 &&
-                        stop.longitude <= longitude + longitudeDelta / 2
-                    );
-                });
-                setVisibleStops(stopsInView);
-            } else {
-                setVisibleStops([]); // Vaciar cuando el zoom no es suficiente
-            }
-        }, 500), // Debounce de 500ms para limitar la frecuencia del cálculo
-        [],
-    );
-
-    // Solo cargar las paradas de autobús cuando la región está definida
-    useEffect(() => {
-        if (region) {
-            filterBusStops(region);
+        const { latitudeDelta, longitude, latitude, longitudeDelta } = region;
+        console.log(
+            'latitudeDelta:' +
+                latitudeDelta +
+                ' min:' +
+                minZoomLevelToShowStops,
+        );
+        if (latitudeDelta <= minZoomLevelToShowStops) {
+            return busStopsData.filter((stop: BusStop) => {
+                return (
+                    stop.latitude >= latitude - latitudeDelta / 2 &&
+                    stop.latitude <= latitude + latitudeDelta / 2 &&
+                    stop.longitude >= longitude - longitudeDelta / 2 &&
+                    stop.longitude <= longitude + longitudeDelta / 2
+                );
+            });
+        } else {
+            return [];
         }
     }, [region]);
+
+    // Actualizar las paradas visibles cuando cambia el resultado filtrado
+    useEffect(() => {
+        setVisibleStops(filteredBusStops);
+    }, [filteredBusStops]);
 
     if (loading || !location) {
         return <Text>Loading map...</Text>;
@@ -121,10 +114,13 @@ export default function Home() {
                             latitude: stop.latitude,
                             longitude: stop.longitude,
                         }}
+                        onPress={() => {
+                            router.push({
+                                pathname: `/stop/${stop.stop_id}`,
+                            });
+                        }}
                     >
-                        <Link href={`/stop/${stop.stop_id}`}>
-                            <BusStopIcon />
-                        </Link>
+                        <BusStopIcon />
                     </Marker>
                 ))}
             </MapView>
