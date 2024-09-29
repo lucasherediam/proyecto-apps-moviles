@@ -1,8 +1,8 @@
-import React from "react";
-import { Stack, useRouter } from "expo-router";
-import { MaterialIcons } from "@expo/vector-icons";
-import { TouchableOpacity } from "react-native";
-import Colors from "@constants/Colors";
+import React from 'react';
+import { Stack, useRouter } from 'expo-router';
+import { MaterialIcons } from '@expo/vector-icons';
+import { TouchableOpacity } from 'react-native';
+import Colors from '@constants/Colors';
 export default function WorkoutLayout() {
     const router = useRouter();
 
@@ -21,7 +21,7 @@ export default function WorkoutLayout() {
             <Stack.Screen
                 name="[id]"
                 options={{
-                    title: "Parada",
+                    title: 'Parada',
                     headerShown: true,
                     headerLeft: () => (
                         <TouchableOpacity onPress={() => router.back()}>
