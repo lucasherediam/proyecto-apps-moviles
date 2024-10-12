@@ -1,10 +1,9 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { BusStopIcon } from '@components/Icons';
 import { router } from 'expo-router';
-const busStopsData: BusStop[] = require('@data/feed-gtfs/stops.json');
 
 type BusStop = {
     stop_id: string;
@@ -25,7 +24,6 @@ export default function Home() {
 
     const minZoomLevelToShowStops = 0.015;
 
-    // Obtener la ubicación actual
     useEffect(() => {
         (async () => {
             let { status } = await Location.requestForegroundPermissionsAsync();
@@ -42,39 +40,37 @@ export default function Home() {
                 latitudeDelta: 0.005,
                 longitudeDelta: 0.005,
             });
-            setLoading(false); // Solo paramos de cargar cuando tenemos la ubicación
+            setLoading(false);
         })();
     }, []);
 
-    // Memoizar el cálculo de las paradas visibles para no re-renderizar el mapa innecesariamente
-    const filteredBusStops = useMemo(() => {
-        if (!region) return [];
+    const fetchBusStops = async (
+        latitude: number,
+        longitude: number,
+        radius: number,
+    ) => {
+        try {
+            const response = await fetch(
+                `http://localhost:3000/busstops?latitude=${latitude}&longitude=${longitude}&radius=${radius}`,
+            );
+            const data = await response.json();
+            setVisibleStops(data);
+        } catch (error) {
+            console.error('Error fetching bus stops:', error);
+        }
+    };
 
-        const { latitudeDelta, longitude, latitude, longitudeDelta } = region;
-        console.log(
-            'latitudeDelta:' +
-                latitudeDelta +
-                ' min:' +
-                minZoomLevelToShowStops,
-        );
-        if (latitudeDelta <= minZoomLevelToShowStops) {
-            return busStopsData.filter((stop: BusStop) => {
-                return (
-                    stop.latitude >= latitude - latitudeDelta / 2 &&
-                    stop.latitude <= latitude + latitudeDelta / 2 &&
-                    stop.longitude >= longitude - longitudeDelta / 2 &&
-                    stop.longitude <= longitude + longitudeDelta / 2
-                );
-            });
-        } else {
-            return [];
+    useEffect(() => {
+        if (region) {
+            const { latitude, longitude, latitudeDelta } = region;
+            if (latitudeDelta <= minZoomLevelToShowStops) {
+                const radius = latitudeDelta * 111000;
+                fetchBusStops(latitude, longitude, radius);
+            } else {
+                setVisibleStops([]);
+            }
         }
     }, [region]);
-
-    // Actualizar las paradas visibles cuando cambia el resultado filtrado
-    useEffect(() => {
-        setVisibleStops(filteredBusStops);
-    }, [filteredBusStops]);
 
     if (loading || !location) {
         return <Text>Loading map...</Text>;
@@ -116,7 +112,8 @@ export default function Home() {
                         }}
                         onPress={() => {
                             router.push({
-                                pathname: `/stop/${stop.stop_id}`,
+                                pathname: `/stop/[id]`,
+                                params: { id: stop.stop_id },
                             });
                         }}
                     >
