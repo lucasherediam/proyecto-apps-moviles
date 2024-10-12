@@ -51,7 +51,7 @@ export default function Home() {
     ) => {
         try {
             const response = await fetch(
-                `http://localhost:3000/busstops?latitude=${latitude}&longitude=${longitude}&radius=${radius}`,
+                `http://localhost:3000/bus-stops/?latitude=${latitude}&longitude=${longitude}&radius=${radius}`,
             );
             const data = await response.json();
             setVisibleStops(data);
