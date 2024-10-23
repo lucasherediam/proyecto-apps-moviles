@@ -1,61 +1,115 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import MapView, { Marker, Polyline } from 'react-native-maps';
-import routeData from '@data/feed-gtfs/routes_stops.json';
+import axios from 'axios';
+
+type Coordinate = {
+    latitude: number;
+    longitude: number;
+};
 
 export default function RouteDetails() {
-    const { routeId, userLatitude, userLongitude } = useLocalSearchParams(); // Obtener el routeId desde los parámetros
-    const [routeShape, setRouteShape] = useState([]); // Estado para el recorrido de la ruta (array con todas las coordenadas de las paradas)
-    const [midPoint, setMidPoint] = useState({ latitude: 0, longitude: 0 }); // Estado para el punto medio
-    const mapRef = useRef(null); // Referencia al mapa
+    const { routeId, userLatitude, userLongitude } = useLocalSearchParams<{
+        routeId?: string;
+        userLatitude?: string;
+        userLongitude?: string;
+    }>();
+
+    const [routeShape, setRouteShape] = useState<Coordinate[]>([]);
+    const [stops, setStops] = useState<Coordinate[]>([]);
+    const [midPoint, setMidPoint] = useState<Coordinate | null>(null);
+    const mapRef = useRef<MapView | null>(null);
 
     useEffect(() => {
-        if (routeId && routeData[routeId]) {
-            // Convertir coordenadas de las paradas de la ruta
-            const stops = routeData[routeId].stops
-                .map((stop) => {
-                    const latitude = parseFloat(stop.stop_lat);
-                    const longitude = parseFloat(stop.stop_lon);
-                    if (!isNaN(latitude) && !isNaN(longitude)) {
-                        return {
-                            latitude,
-                            longitude,
-                        };
-                    }
-                    return null; // Filtrar valores nulos o no válidos
-                })
-                .filter((coord) => coord !== null); // Filtrar los valores nulos
-
-            setRouteShape(stops);
-
-            // Calcular el punto medio de la ruta
-            if (stops.length > 0) {
-                const midLatitude =
-                    (stops[0].latitude + stops[stops.length - 1].latitude) / 2;
-                const midLongitude =
-                    (stops[0].longitude + stops[stops.length - 1].longitude) /
-                    2;
-                setMidPoint({ latitude: midLatitude, longitude: midLongitude });
-            }
+        if (routeId) {
+            fetchRouteShapeAndStops(routeId);
         }
     }, [routeId]);
 
+    const fetchRouteShapeAndStops = async (routeId: string) => {
+        try {
+            console.log(`Fetching route shape for route ${routeId}`);
+            const shapeResponse = await axios.get(
+                `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/bus-route/${routeId}/shape`,
+            );
+
+            const stopsResponse = await axios.get(
+                `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/bus-route/${routeId}/stops`,
+            );
+
+            if (
+                shapeResponse.data.length === 0 ||
+                stopsResponse.data.length === 0
+            ) {
+                Alert.alert(
+                    'Error',
+                    'No se encontró la trayectoria o las paradas para esta línea.',
+                );
+                return;
+            }
+
+            // Procesar las coordenadas de la shape
+            const shapeCoords: Coordinate[] = shapeResponse.data[0].points.map(
+                (point: any) => ({
+                    latitude: point.shape_pt_lat,
+                    longitude: point.shape_pt_lon,
+                }),
+            );
+
+            // Procesar las coordenadas de las paradas
+            const stopCoords: Coordinate[] = stopsResponse.data.map(
+                (stop: any) => ({
+                    latitude: stop.latitude,
+                    longitude: stop.longitude,
+                }),
+            );
+
+            if (shapeCoords.length === 0 || stopCoords.length === 0) {
+                Alert.alert(
+                    'Error',
+                    'No se encontraron puntos válidos para esta ruta.',
+                );
+                return;
+            }
+
+            setRouteShape(shapeCoords);
+            setStops(stopCoords);
+            // Calcular el punto medio para centrar el mapa
+            const midLatitude =
+                (shapeCoords[0].latitude +
+                    shapeCoords[shapeCoords.length - 1].latitude) /
+                2;
+            const midLongitude =
+                (shapeCoords[0].longitude +
+                    shapeCoords[shapeCoords.length - 1].longitude) /
+                2;
+
+            setMidPoint({ latitude: midLatitude, longitude: midLongitude });
+        } catch (error) {
+            Alert.alert(
+                'Error',
+                'No se pudo obtener la trayectoria de la línea.',
+            );
+            console.error(error);
+        }
+    };
+
     useEffect(() => {
-        // Ajustar el zoom para que se vea toda la ruta y la ubicación del usuario
         if (
             mapRef.current &&
             routeShape.length > 0 &&
             userLatitude &&
             userLongitude
         ) {
-            const coordinates = [
+            const coordinates: Coordinate[] = [
                 ...routeShape,
                 {
                     latitude: parseFloat(userLatitude),
                     longitude: parseFloat(userLongitude),
                 },
             ];
+
             mapRef.current.fitToCoordinates(coordinates, {
                 edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
                 animated: true,
@@ -63,7 +117,7 @@ export default function RouteDetails() {
         }
     }, [routeShape, userLatitude, userLongitude]);
 
-    if (!routeShape.length) {
+    if (!midPoint || !routeShape.length || !stops.length) {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="blue" />
@@ -85,19 +139,16 @@ export default function RouteDetails() {
                     longitudeDelta: 0.1,
                 }}
             >
-                {/* Mostrar la polilínea del recorrido */}
+                {/* Mostrar la shape completa */}
                 <Polyline
                     coordinates={routeShape}
-                    strokeColor="blue" // Color de la línea
-                    strokeWidth={8} // Grosor de la línea
+                    strokeColor="blue"
+                    strokeWidth={8}
                 />
-                {/* Mostrar marcadores para cada parada */}
-                {routeShape.map((stop, index) => (
-                    <Marker
-                        key={index}
-                        coordinate={stop}
-                        title={`Parada ${index + 1}`}
-                    >
+
+                {/* Mostrar solo los puntos de las paradas */}
+                {stops.map((stop, index) => (
+                    <Marker key={index} coordinate={stop}>
                         <View style={styles.marker}>
                             <View style={styles.markerContent} />
                         </View>

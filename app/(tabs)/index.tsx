@@ -7,6 +7,7 @@ import { router } from 'expo-router';
 
 type BusStop = {
     stop_id: string;
+    stop_name: string;
     latitude: number;
     longitude: number;
 };
@@ -51,7 +52,7 @@ export default function Home() {
     ) => {
         try {
             const response = await fetch(
-                `http://localhost:3000/bus-stops/?latitude=${latitude}&longitude=${longitude}&radius=${radius}`,
+                `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/bus-stops/?latitude=${latitude}&longitude=${longitude}&radius=${radius}`,
             );
             const data = await response.json();
             setVisibleStops(data);
@@ -113,7 +114,10 @@ export default function Home() {
                         onPress={() => {
                             router.push({
                                 pathname: `/stop/[id]`,
-                                params: { id: stop.stop_id },
+                                params: {
+                                    id: stop.stop_id,
+                                    name: stop.stop_name,
+                                },
                             });
                         }}
                     >

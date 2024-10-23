@@ -1,22 +1,60 @@
-import React from 'react';
+import React, { useEffect, useState, useLayoutEffect } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     FlatList,
     TouchableOpacity,
+    ActivityIndicator,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router'; // Agregar useRouter para la navegación
-import busStopsData from '@data/feed-gtfs/stops_routes.json';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import { Screen } from '@/components/Screen';
 import Colors from '@/constants/Colors';
+import Spacing from '@/constants/Spacing';
+import BusNumberBadge from '@components/BusNumberBadge';
 
 export default function StopDetails() {
-    const { id, userLatitude, userLongitude } = useLocalSearchParams(); // Obtener el id de la parada desde la URL
-    const router = useRouter(); // Usar el hook useRouter para navegar
-    // Buscar la información de la parada en los datos
-    const stop = busStopsData[id];
-    // console.log(stop);
+    const { id, name, userLatitude, userLongitude } = useLocalSearchParams();
+    const router = useRouter();
+    const navigation = useNavigation();
+    const [stop, setStop] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                const response = await fetch(
+                    `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/bus-stops/${id}/buses`,
+                );
+                const data = await response.json();
+                setStop(data);
+                setLoading(false);
+            } catch (error) {
+                console.error('Error fetching bus stops:', error);
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [id]);
+
+    useLayoutEffect(() => {
+        if (stop) {
+            navigation.setOptions({
+                title: `${name}`,
+            });
+        }
+    }, [stop, navigation]);
+
+    if (loading) {
+        return (
+            <Screen>
+                <ActivityIndicator size="large" color={Colors.textPrimary} />
+            </Screen>
+        );
+    }
 
     if (!stop) {
         return (
@@ -26,7 +64,6 @@ export default function StopDetails() {
         );
     }
 
-    // Función para manejar la selección del ítem y navegar
     const handleItemPress = async (item) => {
         router.push({
             pathname: '/route/route-details',
@@ -39,62 +76,86 @@ export default function StopDetails() {
         });
     };
 
+    const renderSeparator = () => {
+        return <View style={styles.separator} />;
+    };
+
     return (
         <Screen stack>
-            <View style={styles.container}>
-                <FlatList
-                    data={stop} // El array de colectivos
-                    keyExtractor={(item) => item.route_id} // Usar el route_id como clave única
-                    renderItem={({ item }) => (
-                        <TouchableOpacity onPress={() => handleItemPress(item)}>
-                            <View style={styles.itemContainer}>
-                                <Text style={styles.routeShortName}>
-                                    {item.route_short_name}
-                                </Text>
-                                <Text style={styles.routeDesc}>
-                                    {item.route_desc_simplified}
+            <View style={styles.headerContainer}>
+                <Text style={styles.headerTitle}>{name}</Text>
+                <Text style={styles.subHeader}>Próximas llegadas</Text>
+            </View>
+            <FlatList
+                data={stop}
+                keyExtractor={(item) => item.route_id}
+                renderItem={({ item }) => (
+                    <TouchableOpacity onPress={() => handleItemPress(item)}>
+                        <View style={styles.itemContainer}>
+                            <BusNumberBadge
+                                routeNumber={item.route_short_name}
+                            />
+                            <Text style={styles.routeDesc}>
+                                {item.trip_headsigns}
+                            </Text>
+                            <View style={styles.timeContainer}>
+                                <Text style={styles.timeText}>
+                                    {item.scheduled_time}
                                 </Text>
                             </View>
-                        </TouchableOpacity>
-                    )}
-                />
-            </View>
+                        </View>
+                    </TouchableOpacity>
+                )}
+                ItemSeparatorComponent={renderSeparator}
+                ListFooterComponent={renderSeparator}
+            />
         </Screen>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        marginTop: 16,
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 16,
-        color: Colors.textPrimary,
-        textAlign: 'center',
-    },
-    itemContainer: {
-        backgroundColor: Colors.cardBackground,
+    headerContainer: {
         padding: 16,
-        marginBottom: 8,
-        borderRadius: 8,
-        width: '100%',
-        flexDirection: 'row',
+        backgroundColor: Colors.primary,
+        marginBottom: 20,
         alignItems: 'center',
     },
-    routeShortName: {
-        fontSize: 20,
+    headerTitle: {
+        fontSize: 28,
         fontWeight: 'bold',
         color: Colors.textPrimary,
-        marginRight: 5,
+        marginBottom: 4,
+    },
+    subHeader: {
+        fontSize: 18,
+        color: Colors.textSecondary,
+        marginBottom: 16,
+    },
+    itemContainer: {
+        paddingVertical: 10,
+        height: 80,
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     routeDesc: {
         fontSize: 16,
         color: Colors.textSecondary,
+        marginLeft: 10,
         flex: 1,
-        flexWrap: 'wrap',
+    },
+    timeContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    timeText: {
+        fontSize: 16,
+        color: Colors.textPrimary,
+        marginLeft: 4,
+    },
+    separator: {
+        height: 1,
+        width: '100%',
+        backgroundColor: Colors.border,
     },
     errorText: {
         fontSize: 20,
