@@ -5,7 +5,7 @@ import Svg, { Path } from 'react-native-svg';
 export const BusStopIcon = () => {
     return (
         <View style={styles.container}>
-            <View style={styles.iconWrapper}>
+            <View style={styles.busIconWrapper}>
                 <BusIcon />
             </View>
             {/* Agregamos el "palito" debajo del icono */}
@@ -29,12 +29,39 @@ export const BusIcon = (props) => (
     </Svg>
 );
 
+export const SubwayStationIcon = () => {
+    return (
+        <View style={styles.container}>
+            <View style={styles.subwayIconWrapper}>
+                <SubwayIcon />
+            </View>
+            <View style={styles.stick} />
+        </View>
+    );
+};
+
+export const SubwayIcon = (props) => (
+    <Svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="18px"
+        height="18px"
+        viewBox="0 0 64 64"
+        {...props}
+    >
+        <Path
+            d="M32 2C19.192 2 9 12.192 9 25v21c0 4.57 2.336 8.602 5.846 11.032L11 61h2.414l3.25-3h30.672l3.25 3H53l-3.846-3.968C52.664 54.602 55 50.57 55 46V25C55 12.192 44.808 2 32 2zm0 2c10.493 0 19 8.507 19 19v21c0 4.178-2.5 7.823-6.25 9.732H19.25C15.5 51.823 13 48.178 13 44V25c0-10.493 8.507-19 19-19zm-8 9a2 2 0 100 4h16a2 2 0 100-4H24zm-4 12v14h24V25H20zm5 17a3 3 0 110 6 3 3 0 010-6zm14 0a3 3 0 110 6 3 3 0 010-6z"
+            fill="#fff"
+        />
+    </Svg>
+);
+
+
 const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
         justifyContent: 'center',
     },
-    iconWrapper: {
+    busIconWrapper: {
         width: 24,
         height: 24,
         backgroundColor: '#1065c0',
@@ -50,6 +77,22 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 3,
         // Agregamos una pequeña sombra arriba del palito (debajo del ícono)
+    },
+    subwayIconWrapper: {
+        width: 24,
+        height: 24,
+        backgroundColor: '#f2a71b',
+        borderRadius: 8,
+        padding: 5,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#ccc',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 3,
     },
     stick: {
         width: 2, // Ajusta el ancho del "palito"
