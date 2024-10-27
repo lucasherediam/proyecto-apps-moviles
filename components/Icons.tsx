@@ -5,7 +5,7 @@ import Svg, { Path } from 'react-native-svg';
 export const BusStopIcon = () => {
     return (
         <View style={styles.container}>
-            <View style={styles.iconWrapper}>
+            <View style={styles.busIconWrapper}>
                 <BusIcon />
             </View>
             {/* Agregamos el "palito" debajo del icono */}
@@ -32,7 +32,7 @@ export const BusIcon = (props) => (
 export const SubwayStationIcon = () => {
     return (
         <View style={styles.container}>
-            <View style={styles.iconWrapper}>
+            <View style={styles.subwayIconWrapper}>
                 <SubwayIcon />
             </View>
             <View style={styles.stick} />
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    iconWrapper: {
+    busIconWrapper: {
         width: 24,
         height: 24,
         backgroundColor: '#1065c0',
@@ -77,6 +77,22 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 3,
         // Agregamos una pequeña sombra arriba del palito (debajo del ícono)
+    },
+    subwayIconWrapper: {
+        width: 24,
+        height: 24,
+        backgroundColor: '#f2a71b',
+        borderRadius: 8,
+        padding: 5,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#ccc',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 3,
     },
     stick: {
         width: 2, // Ajusta el ancho del "palito"
