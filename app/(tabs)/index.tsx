@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
-import { BusStopIcon } from '@components/Icons';
+import { BusStopIcon, SubwayStationIcon } from '@components/Icons';
 import { router } from 'expo-router';
 
 type BusStop = {
@@ -10,6 +10,14 @@ type BusStop = {
     stop_name: string;
     latitude: number;
     longitude: number;
+};
+
+type SubwayStation = {
+    station_id: string;
+    station_name: string;
+    latitude: number;
+    longitude: number;
+    route_short_name: string;
 };
 
 type LocationCoords = {
@@ -20,6 +28,7 @@ type LocationCoords = {
 export default function Home() {
     const [location, setLocation] = useState<LocationCoords | null>(null);
     const [visibleStops, setVisibleStops] = useState<BusStop[]>([]);
+    const [visibleStations, setVisibleStations] = useState<SubwayStation[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [region, setRegion] = useState<Region | null>(null);
 
@@ -61,14 +70,32 @@ export default function Home() {
         }
     };
 
+    const fetchSubwayStations = async (
+        latitude: number,
+        longitude: number,
+        radius: number,
+    ) => {
+        try {
+            const response = await fetch(
+                `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/subway-stations/?latitude=${latitude}&longitude=${longitude}&radius=${radius}`,
+            );
+            const data = await response.json();
+            setVisibleStations(data);
+        } catch (error) {
+            console.error('Error fetching subway stations:', error);
+        }
+    };
+
     useEffect(() => {
         if (region) {
             const { latitude, longitude, latitudeDelta } = region;
             if (latitudeDelta <= minZoomLevelToShowStops) {
                 const radius = latitudeDelta * 111000;
                 fetchBusStops(latitude, longitude, radius);
+                fetchSubwayStations(latitude, longitude, radius);
             } else {
                 setVisibleStops([]);
+                setVisibleStations([]);
             }
         }
     }, [region]);
@@ -122,6 +149,27 @@ export default function Home() {
                         }}
                     >
                         <BusStopIcon />
+                    </Marker>
+                ))}
+                {visibleStations.map((station) => (
+                    <Marker
+                        key={station.station_id}
+                        coordinate={{
+                            latitude: station.latitude,
+                            longitude: station.longitude,
+                        }}
+                        onPress={() => {
+                            router.push({
+                                pathname: `/subway-station/[id]`,
+                                params: {
+                                    id: station.station_id,
+                                    name: station.station_name,
+                                    route: station.route_short_name,
+                                },
+                            });
+                        }}
+                    >
+                        <SubwayStationIcon />
                     </Marker>
                 ))}
             </MapView>
