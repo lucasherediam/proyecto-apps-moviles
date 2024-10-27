@@ -11,8 +11,14 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { Screen } from '@/components/Screen';
 import Colors from '@/constants/Colors';
-import Spacing from '@/constants/Spacing';
 import BusNumberBadge from '@components/BusNumberBadge';
+
+type BusRouteItem = {
+    route_id: string;
+    route_short_name: string;
+    agency_color: string;
+    trip_headsigns: string;
+};
 
 export default function StopDetails() {
     const { id, name, userLatitude, userLongitude } = useLocalSearchParams();
@@ -64,7 +70,7 @@ export default function StopDetails() {
         );
     }
 
-    const handleItemPress = async (item) => {
+    const handleItemPress = async (item: BusRouteItem) => {
         router.push({
             pathname: '/route/route-details',
             params: {
@@ -94,6 +100,7 @@ export default function StopDetails() {
                         <View style={styles.itemContainer}>
                             <BusNumberBadge
                                 routeNumber={item.route_short_name}
+                                agencyColor={item.agency_color}
                             />
                             <Text style={styles.routeDesc}>
                                 {item.trip_headsigns}
@@ -112,7 +119,6 @@ export default function StopDetails() {
         </Screen>
     );
 }
-
 const styles = StyleSheet.create({
     headerContainer: {
         padding: 16,

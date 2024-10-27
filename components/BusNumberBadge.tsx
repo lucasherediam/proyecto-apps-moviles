@@ -2,8 +2,12 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-const BusNumberBadge = ({ routeNumber }) => {
-    // Extrae solo la parte numérica del número de ruta
+type BusNumberBadgeProps = {
+    routeNumber: string;
+    agencyColor: string;
+};
+
+const BusNumberBadge = ({ routeNumber, agencyColor }: BusNumberBadgeProps) => {
     const formattedRouteNumber = routeNumber.match(/^\d+/)?.[0] || routeNumber;
 
     return (
@@ -19,7 +23,8 @@ const BusNumberBadge = ({ routeNumber }) => {
                     {formattedRouteNumber}
                 </Text>
             </View>
-            <View style={styles.redBar} />
+            {/* Aplica el color solo a la barra inferior */}
+            <View style={[styles.colorBar, { backgroundColor: agencyColor }]} />
         </View>
     );
 };
@@ -28,7 +33,7 @@ const styles = StyleSheet.create({
     badgeContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#333',
+        backgroundColor: '#333', // Color de fondo del badge
         borderRadius: 4,
         padding: 4,
         position: 'relative',
@@ -48,13 +53,12 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
     },
-    redBar: {
+    colorBar: {
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
         height: 4,
-        backgroundColor: '#FF0000',
         borderBottomLeftRadius: 4,
         borderBottomRightRadius: 4,
     },
