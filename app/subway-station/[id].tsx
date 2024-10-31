@@ -65,7 +65,7 @@ export default function StationDetails() {
 
     return (
         <Screen stack>
-            <View style={styles.headerContainer}>
+            <View style={[styles.headerContainer, { backgroundColor: station.color || Colors.primary }]}>
                 <Text style={styles.headerTitle}>{name}</Text>
                 <Text style={styles.subHeader}>Próximas llegadas</Text>
             </View>
@@ -79,6 +79,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primary,
         marginBottom: 20,
         alignItems: 'center',
+        borderRadius: 10,
     },
     headerTitle: {
         fontSize: 28,
