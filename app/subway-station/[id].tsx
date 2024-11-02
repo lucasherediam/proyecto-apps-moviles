@@ -6,29 +6,63 @@ import {
     FlatList,
     TouchableOpacity,
     ActivityIndicator,
+    Pressable,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { Screen } from '@/components/Screen';
 import Colors from '@/constants/Colors';
 import Spacing from '@/constants/Spacing';
+import { FontAwesome } from '@expo/vector-icons';
+
+type SubwayStation = {
+    station_id: string;
+    station_name: string;
+    latitude: number;
+    longitude: number;
+    route_short_name: string;
+    color: string;
+};
+
+type SubwayArrivalItem = {
+    destination: string;
+    station_name: string;
+    arrival: Arrival;
+    departure: Departure;
+};
+
+type Arrival = {
+    time: string;
+    remainingTime: string;
+};
+
+type Departure = {
+    time: string;
+    remainingTime: string;
+};
 
 export default function StationDetails() {
     const { id, name, userLatitude, userLongitude } = useLocalSearchParams();
     const router = useRouter();
     const navigation = useNavigation();
-    const [station, setStation] = useState(null);
+    const [station, setStation] = useState<SubwayStation | null>(null);
+    const [arrivals, setArrivals] = useState<SubwayArrivalItem[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const response = await fetch(
+                const responseSubwayStation = await fetch(
                     `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/subway-stations/${id}`,
                 );
-                const data = await response.json();
-                setStation(data);
+                const dataSubwayStation = await responseSubwayStation.json();
+                setStation(dataSubwayStation);
+                const responseArrivals = await fetch(
+                    `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/subway-stations/${id}/arrival`,
+                );
+                const dataArrivals = await responseArrivals.json();
+                setArrivals(dataArrivals);
                 setLoading(false);
             } catch (error) {
                 console.error('Error fetching subway station:', error);
@@ -58,17 +92,60 @@ export default function StationDetails() {
     if (!station) {
         return (
             <Screen>
-                <Text style={styles.errorText}>Estacion no encontrada</Text>
+                <Text style={styles.errorText}>Estación no encontrada</Text>
             </Screen>
         );
     }
 
+    const handleItemPress = async (station: SubwayStation) => {
+        router.push({
+            pathname: '/subway-line/line-details',
+            params: {
+                station_id: station.station_id,
+                station_name: station.station_name,
+                latitude: station.latitude,
+                longitude: station.longitude,
+                route_short_name: station.route_short_name,
+                color: station.color,
+                userLatitude: userLatitude,
+                userLongitude: userLongitude,
+            },
+        });
+    };
+
+    const renderSeparator = () => {
+        return <View style={styles.separator} />;
+    };
+
     return (
         <Screen stack>
-            <View style={[styles.headerContainer, { backgroundColor: station.color || Colors.primary }]}>
-                <Text style={styles.headerTitle}>{name}</Text>
-                <Text style={styles.subHeader}>Próximas llegadas</Text>
-            </View>
+            <Pressable onPress={() => handleItemPress(station)}>
+                <View style={[styles.headerContainer, { backgroundColor: station.color || Colors.primary }]}>
+                    <Text style={styles.headerTitle}>{name}</Text>
+                    <Text style={styles.subHeader}>Próximas llegadas</Text>
+                </View>
+            </Pressable>
+            <FlatList
+                data={arrivals}
+                keyExtractor={(item) => item.destination}
+                renderItem={({ item }) => (
+                    <TouchableOpacity>
+                        <View style={styles.itemContainer}>
+                            <Text style={styles.routeDesc}>{item.destination}</Text>
+                            <View style={styles.timeInfoContainer}>
+                                <FontAwesome name="clock-o" size={16} color={Colors.textSecondary} />
+                                <Text style={styles.timeText}>Llegada en: {item.arrival.remainingTime}</Text>
+                            </View>
+                            <View style={styles.timeInfoContainer}>
+                                <FontAwesome name="clock-o" size={16} color={Colors.textSecondary} />
+                                <Text style={styles.timeText}>Salida en: {item.departure.remainingTime}</Text>
+                            </View>
+                        </View>
+                    </TouchableOpacity>
+                )}
+                ItemSeparatorComponent={renderSeparator}
+                ListFooterComponent={renderSeparator}
+            />
         </Screen>
     );
 }
@@ -94,24 +171,31 @@ const styles = StyleSheet.create({
     },
     itemContainer: {
         paddingVertical: 10,
-        height: 80,
-        flexDirection: 'row',
-        alignItems: 'center',
+        paddingHorizontal: 15,
+        marginVertical: 5,
+        backgroundColor: Colors.cardBackground,
+        borderRadius: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 3,
     },
     routeDesc: {
-        fontSize: 16,
-        color: Colors.textSecondary,
-        marginLeft: 10,
-        flex: 1,
+        fontSize: 18,
+        fontWeight: '600',
+        color: Colors.textPrimary,
+        marginBottom: 8,
     },
-    timeContainer: {
+    timeInfoContainer: {
         flexDirection: 'row',
         alignItems: 'center',
+        marginBottom: 5,
     },
     timeText: {
         fontSize: 16,
-        color: Colors.textPrimary,
-        marginLeft: 4,
+        color: Colors.textSecondary,
+        marginLeft: 8,
     },
     separator: {
         height: 1,
@@ -121,5 +205,7 @@ const styles = StyleSheet.create({
     errorText: {
         fontSize: 20,
         color: 'red',
+        textAlign: 'center',
+        marginTop: 20,
     },
 });
