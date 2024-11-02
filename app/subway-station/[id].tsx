@@ -117,14 +117,16 @@ export default function StationDetails() {
         return <View style={styles.separator} />;
     };
 
-    return (
-        <Screen stack>
-            <Pressable onPress={() => handleItemPress(station)}>
-                <View style={[styles.headerContainer, { backgroundColor: station.color || Colors.primary }]}>
-                    <Text style={styles.headerTitle}>{name}</Text>
-                    <Text style={styles.subHeader}>Próximas llegadas</Text>
-                </View>
-            </Pressable>
+    const noArrivalsFound = () => {
+        return (
+            <View>
+                <Text style={styles.errorText}>No se encontraron llegadas</Text>
+            </View>
+        );
+    };
+
+    const arrivalsFound = () => {
+        return (
             <FlatList
                 data={arrivals}
                 keyExtractor={(item) => item.destination}
@@ -146,6 +148,20 @@ export default function StationDetails() {
                 ItemSeparatorComponent={renderSeparator}
                 ListFooterComponent={renderSeparator}
             />
+        );
+    }
+    
+    return (
+        <Screen stack>
+            <Pressable onPress={() => handleItemPress(station)}>
+                <View style={[styles.headerContainer, { backgroundColor: station.color || Colors.primary }]}>
+                    <Text style={styles.headerTitle}>{name}</Text>
+                    <Text style={styles.subHeader}>Próximas llegadas</Text>
+                </View>
+            </Pressable>
+            {
+            arrivals.length == 0 ? noArrivalsFound() : arrivalsFound()    
+            }
         </Screen>
     );
 }
