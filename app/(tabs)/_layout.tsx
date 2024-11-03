@@ -14,12 +14,12 @@ const TabsLayout = () => {
                 }}
             />
             <Tabs.Screen
-                name="stations"
+                name="lines"
                 options={{
-                    tabBarLabel: 'Stations',
+                    tabBarLabel: 'Lines',
                     tabBarIcon: () => (
                         <MaterialCommunityIcons
-                            name="map-marker-path"
+                            name="map-marker-distance"
                             size={24}
                         />
                     ),
