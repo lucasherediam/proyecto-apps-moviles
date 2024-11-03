@@ -9,7 +9,8 @@
       "@constants/*": ["constants/*"],
       "@components/*": ["components/*"],
       "@assets/*": ["assets/*"],
-      "@context/*": ["context/*"]
+      "@context/*": ["context/*"],
+      "@hooks/*": ["hooks/*"]
     },
     "resolveJsonModule": true,
     "esModuleInterop": true

@@ -10,7 +10,8 @@
           "@components": "./components",
           "@assets": "./assets",
           "@context": "./context",
-          "@data": "./data"
+          "@data": "./data",
+          "@hooks": "./hooks"
         }
       }
     ]

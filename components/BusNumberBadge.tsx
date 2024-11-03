@@ -8,8 +8,8 @@ type BusNumberBadgeProps = {
 };
 
 const BusNumberBadge = ({ routeNumber, agencyColor }: BusNumberBadgeProps) => {
+    // console.log('BusNumberBadge:', routeNumber, agencyColor);
     const formattedRouteNumber = routeNumber.match(/^\d+/)?.[0] || routeNumber;
-
     return (
         <View style={styles.badgeContainer}>
             <View style={styles.iconAndText}>
@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
     badgeContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#333', // Color de fondo del badge
+        backgroundColor: '#333',
         borderRadius: 4,
         padding: 4,
         position: 'relative',
