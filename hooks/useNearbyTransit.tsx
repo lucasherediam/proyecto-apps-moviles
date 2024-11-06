@@ -1,4 +1,6 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from 'react';
+import { debounce } from 'lodash';
 
 type BusStop = {
     stop_id: string;
@@ -39,7 +41,15 @@ const useNearbyTransit = (
                 `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/bus-stops/?latitude=${latitude}&longitude=${longitude}&radius=${radius}`,
             );
             const data = await response.json();
-            setVisibleStops(data);
+            setVisibleStops((prevStops) => {
+                const newStops = data.filter(
+                    (stop: BusStop) =>
+                        !prevStops.some(
+                            (prevStop) => prevStop.stop_id === stop.stop_id,
+                        ),
+                );
+                return [...prevStops, ...newStops];
+            });
         } catch (error) {
             console.error('Error fetching bus stops:', error);
         }
@@ -55,24 +65,48 @@ const useNearbyTransit = (
                 `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/subway-stations/?latitude=${latitude}&longitude=${longitude}&radius=${radius}`,
             );
             const data = await response.json();
-            setVisibleStations(data);
+            setVisibleStations((prevStations) => {
+                const newStations = data.filter(
+                    (station: SubwayStation) =>
+                        !prevStations.some(
+                            (prevStation) =>
+                                prevStation.station_id === station.station_id,
+                        ),
+                );
+                return [...prevStations, ...newStations];
+            });
         } catch (error) {
             console.error('Error fetching subway stations:', error);
         }
     };
 
+    // Debounced fetch function to avoid too many API calls
+    const debouncedFetchTransitData = debounce(
+        (latitude, longitude, radius) => {
+            fetchBusStops(latitude, longitude, radius);
+            fetchSubwayStations(latitude, longitude, radius);
+        },
+        500,
+    );
+
     useEffect(() => {
         if (region) {
             const { latitude, longitude, latitudeDelta } = region;
+
+            // Limita el radio a 300 metros (EXPERIMENTAL)
+            const radius = Math.min(latitudeDelta * 111000, 300);
+
             if (latitudeDelta <= minZoomLevelToShowStops) {
-                const radius = latitudeDelta * 111000;
-                fetchBusStops(latitude, longitude, radius);
-                fetchSubwayStations(latitude, longitude, radius);
+                debouncedFetchTransitData(latitude, longitude, radius);
             } else {
                 setVisibleStops([]);
                 setVisibleStations([]);
             }
         }
+
+        return () => {
+            debouncedFetchTransitData.cancel();
+        };
     }, [region, minZoomLevelToShowStops]);
 
     return { visibleStops, visibleStations };

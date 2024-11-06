@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
 import MapViewCluster from 'react-native-map-clustering';
@@ -7,6 +7,10 @@ import { BusStopIcon, SubwayStationIcon } from '@components/Icons';
 import { router } from 'expo-router';
 import useCurrentLocation from '@hooks/useCurrentLocation';
 import useNearbyTransit from '@hooks/useNearbyTransit';
+import { debounce } from 'lodash';
+
+const MemoizedBusStopIcon = React.memo(BusStopIcon);
+const MemoizedSubwayStationIcon = React.memo(SubwayStationIcon);
 
 export default function Home() {
     const mapRef = useRef<MapView>(null);
@@ -20,7 +24,6 @@ export default function Home() {
         minZoomLevelToShowStops,
     );
 
-    // Establece la región inicial cuando la ubicación está disponible
     useEffect(() => {
         if (location && !region) {
             setRegion({
@@ -31,6 +34,11 @@ export default function Home() {
             });
         }
     }, [location]);
+
+    const handleRegionChangeComplete = useCallback(
+        debounce((newRegion) => setRegion(newRegion), 200),
+        [],
+    );
 
     // Función para volver a la ubicación del usuario con animacion
     const goToUserLocation = () => {
@@ -57,10 +65,30 @@ export default function Home() {
                 ref={mapRef}
                 style={{ flex: 1 }}
                 initialRegion={region as Region}
-                onRegionChangeComplete={(newRegion) => setRegion(newRegion)}
+                onRegionChangeComplete={handleRegionChangeComplete}
                 showsUserLocation={true}
-                showsPointsOfInterest={false}
                 clusterColor="#007AFF"
+                radius={60} // Ajuste para el radio de agrupamiento, puede aumentarse para clusters mayores
+                minPoints={3} // Establece un tamaño mínimo de puntos para formar un clúster
+                showsPointsOfInterest={false} // Para iOS
+                customMapStyle={[
+                    {
+                        featureType: 'poi',
+                        elementType: 'labels',
+                        stylers: [{ visibility: 'off' }],
+                    },
+                    {
+                        featureType: 'transit',
+                        elementType: 'labels',
+                        stylers: [{ visibility: 'off' }],
+                    },
+                    {
+                        featureType: 'road',
+                        elementType: 'labels.icon',
+                        stylers: [{ visibility: 'off' }],
+                    },
+                ]} // Para Android
+                showsMyLocationButton={false}
             >
                 {visibleStops.map((stop) => (
                     <Marker
@@ -79,7 +107,7 @@ export default function Home() {
                             });
                         }}
                     >
-                        <BusStopIcon />
+                        <MemoizedBusStopIcon />
                     </Marker>
                 ))}
                 {visibleStations.map((station) => (
@@ -100,7 +128,7 @@ export default function Home() {
                             });
                         }}
                     >
-                        <SubwayStationIcon />
+                        <MemoizedSubwayStationIcon />
                     </Marker>
                 ))}
             </MapViewCluster>
