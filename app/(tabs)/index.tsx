@@ -59,24 +59,8 @@ export default function Home() {
                 initialRegion={region as Region}
                 onRegionChangeComplete={(newRegion) => setRegion(newRegion)}
                 showsUserLocation={true}
-                customMapStyle={[
-                    {
-                        featureType: 'poi',
-                        elementType: 'labels',
-                        stylers: [{ visibility: 'off' }],
-                    },
-                    {
-                        featureType: 'transit',
-                        elementType: 'labels',
-                        stylers: [{ visibility: 'off' }],
-                    },
-                    {
-                        featureType: 'road',
-                        elementType: 'labels.icon',
-                        stylers: [{ visibility: 'off' }],
-                    },
-                ]}
-                clusterColor="#007AFF" // Color del cluster
+                showsPointsOfInterest={false}
+                clusterColor="#007AFF"
             >
                 {visibleStops.map((stop) => (
                     <Marker
