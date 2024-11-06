@@ -2,6 +2,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
+import MapViewCluster from 'react-native-map-clustering';
 import { BusStopIcon, SubwayStationIcon } from '@components/Icons';
 import { router } from 'expo-router';
 import useCurrentLocation from '@hooks/useCurrentLocation';
@@ -11,7 +12,7 @@ export default function Home() {
     const mapRef = useRef<MapView>(null);
     const { location, loading } = useCurrentLocation();
     const [region, setRegion] = useState<Region | null>(null);
-    const minZoomLevelToShowStops = 0.008;
+    const minZoomLevelToShowStops = 0.01;
 
     // Hook para obtener paradas y estaciones visibles
     const { visibleStops, visibleStations } = useNearbyTransit(
@@ -52,13 +53,11 @@ export default function Home() {
 
     return (
         <View style={{ flex: 1 }}>
-            <MapView
+            <MapViewCluster
                 ref={mapRef}
                 style={{ flex: 1 }}
-                region={region as Region}
-                onRegionChangeComplete={(newRegion) => {
-                    setRegion(newRegion);
-                }}
+                initialRegion={region as Region}
+                onRegionChangeComplete={(newRegion) => setRegion(newRegion)}
                 showsUserLocation={true}
                 customMapStyle={[
                     {
@@ -77,6 +76,7 @@ export default function Home() {
                         stylers: [{ visibility: 'off' }],
                     },
                 ]}
+                clusterColor="#007AFF" // Color del cluster
             >
                 {visibleStops.map((stop) => (
                     <Marker
@@ -119,7 +119,7 @@ export default function Home() {
                         <SubwayStationIcon />
                     </Marker>
                 ))}
-            </MapView>
+            </MapViewCluster>
 
             {/* Botón para volver a la ubicación del usuario */}
             <TouchableOpacity
