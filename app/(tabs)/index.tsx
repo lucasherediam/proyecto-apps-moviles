@@ -1,104 +1,50 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text } from 'react-native';
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useRef, useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
-import * as Location from 'expo-location';
 import { BusStopIcon, SubwayStationIcon } from '@components/Icons';
 import { router } from 'expo-router';
-
-type BusStop = {
-    stop_id: string;
-    stop_name: string;
-    latitude: number;
-    longitude: number;
-};
-
-type SubwayStation = {
-    station_id: string;
-    station_name: string;
-    latitude: number;
-    longitude: number;
-    route_short_name: string;
-};
-
-type LocationCoords = {
-    latitude: number;
-    longitude: number;
-};
+import useCurrentLocation from '@hooks/useCurrentLocation';
+import useNearbyTransit from '@hooks/useNearbyTransit';
 
 export default function Home() {
-    const [location, setLocation] = useState<LocationCoords | null>(null);
-    const [visibleStops, setVisibleStops] = useState<BusStop[]>([]);
-    const [visibleStations, setVisibleStations] = useState<SubwayStation[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
+    const mapRef = useRef<MapView>(null);
+    const { location, loading } = useCurrentLocation();
     const [region, setRegion] = useState<Region | null>(null);
+    const minZoomLevelToShowStops = 0.008;
 
-    const minZoomLevelToShowStops = 0.015;
+    // Hook para obtener paradas y estaciones visibles
+    const { visibleStops, visibleStations } = useNearbyTransit(
+        region,
+        minZoomLevelToShowStops,
+    );
 
+    // Establece la región inicial cuando la ubicación está disponible
     useEffect(() => {
-        (async () => {
-            let { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') {
-                console.log('Permission to access location was denied');
-                return;
-            }
-
-            let loc = await Location.getCurrentPositionAsync({});
-            setLocation(loc.coords);
+        if (location && !region) {
             setRegion({
-                latitude: loc.coords.latitude,
-                longitude: loc.coords.longitude,
-                latitudeDelta: 0.005,
-                longitudeDelta: 0.005,
+                latitude: location.latitude,
+                longitude: location.longitude,
+                latitudeDelta: 0.003,
+                longitudeDelta: 0.003,
             });
-            setLoading(false);
-        })();
-    }, []);
+        }
+    }, [location]);
 
-    const fetchBusStops = async (
-        latitude: number,
-        longitude: number,
-        radius: number,
-    ) => {
-        try {
-            const response = await fetch(
-                `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/bus-stops/?latitude=${latitude}&longitude=${longitude}&radius=${radius}`,
+    // Función para volver a la ubicación del usuario con animacion
+    const goToUserLocation = () => {
+        if (location && mapRef.current) {
+            mapRef.current.animateToRegion(
+                {
+                    latitude: location.latitude,
+                    longitude: location.longitude,
+                    latitudeDelta: 0.003,
+                    longitudeDelta: 0.003,
+                },
+                1000, // Duración de la animación en milisegundos
             );
-            const data = await response.json();
-            setVisibleStops(data);
-        } catch (error) {
-            console.error('Error fetching bus stops:', error);
         }
     };
-
-    const fetchSubwayStations = async (
-        latitude: number,
-        longitude: number,
-        radius: number,
-    ) => {
-        try {
-            const response = await fetch(
-                `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/subway-stations/?latitude=${latitude}&longitude=${longitude}&radius=${radius}`,
-            );
-            const data = await response.json();
-            setVisibleStations(data);
-        } catch (error) {
-            console.error('Error fetching subway stations:', error);
-        }
-    };
-
-    useEffect(() => {
-        if (region) {
-            const { latitude, longitude, latitudeDelta } = region;
-            if (latitudeDelta <= minZoomLevelToShowStops) {
-                const radius = latitudeDelta * 111000;
-                fetchBusStops(latitude, longitude, radius);
-                fetchSubwayStations(latitude, longitude, radius);
-            } else {
-                setVisibleStops([]);
-                setVisibleStations([]);
-            }
-        }
-    }, [region]);
 
     if (loading || !location) {
         return <Text>Loading map...</Text>;
@@ -107,6 +53,7 @@ export default function Home() {
     return (
         <View style={{ flex: 1 }}>
             <MapView
+                ref={mapRef}
                 style={{ flex: 1 }}
                 region={region as Region}
                 onRegionChangeComplete={(newRegion) => {
@@ -173,6 +120,33 @@ export default function Home() {
                     </Marker>
                 ))}
             </MapView>
+
+            {/* Botón para volver a la ubicación del usuario */}
+            <TouchableOpacity
+                style={styles.locationButton}
+                onPress={goToUserLocation}
+            >
+                <Text style={styles.buttonText}>📍</Text>
+            </TouchableOpacity>
         </View>
     );
 }
+
+const styles = StyleSheet.create({
+    locationButton: {
+        position: 'absolute',
+        bottom: 20,
+        right: 20,
+        backgroundColor: 'white',
+        padding: 10,
+        borderRadius: 50,
+        elevation: 5, // Sombra para Android
+        shadowColor: '#000', // Sombra para iOS
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.8,
+        shadowRadius: 2,
+    },
+    buttonText: {
+        fontSize: 20,
+    },
+});
