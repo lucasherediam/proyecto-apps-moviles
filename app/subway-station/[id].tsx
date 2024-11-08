@@ -14,6 +14,8 @@ import { Screen } from '@/components/Screen';
 import Colors from '@/constants/Colors';
 import Spacing from '@/constants/Spacing';
 import { FontAwesome } from '@expo/vector-icons';
+import StationHeader from '@/components/StationHeader';
+import ArrivalItem from '@/components/ArrivalItem';
 
 type SubwayStation = {
     station_id: string;
@@ -131,19 +133,10 @@ export default function StationDetails() {
                 data={arrivals}
                 keyExtractor={(item) => item.destination}
                 renderItem={({ item }) => (
-                    <TouchableOpacity>
-                        <View style={styles.itemContainer}>
-                            <Text style={styles.routeDesc}>{item.destination}</Text>
-                            <View style={styles.timeInfoContainer}>
-                                <FontAwesome name="clock-o" size={16} color={Colors.textSecondary} />
-                                <Text style={styles.timeText}>Llegada en: {item.arrival.remainingTime}</Text>
-                            </View>
-                            <View style={styles.timeInfoContainer}>
-                                <FontAwesome name="clock-o" size={16} color={Colors.textSecondary} />
-                                <Text style={styles.timeText}>Salida en: {item.departure.remainingTime}</Text>
-                            </View>
-                        </View>
-                    </TouchableOpacity>
+                    <ArrivalItem
+                    destination={item.destination}
+                    remainingTime={item.departure.remainingTime}
+                />
                 )}
                 ItemSeparatorComponent={renderSeparator}
                 ListFooterComponent={renderSeparator}
@@ -153,12 +146,13 @@ export default function StationDetails() {
     
     return (
         <Screen stack>
-            <Pressable onPress={() => handleItemPress(station)}>
-                <View style={[styles.headerContainer, { backgroundColor: station.color || Colors.primary }]}>
-                    <Text style={styles.headerTitle}>{name}</Text>
-                    <Text style={styles.subHeader}>Próximas llegadas</Text>
-                </View>
-            </Pressable>
+            {station && (
+                <StationHeader
+                    name={station.station_name}
+                    color={station.color}
+                    onPress={() => handleItemPress(station)}
+                />
+            )}
             {
             arrivals.length == 0 ? noArrivalsFound() : arrivalsFound()    
             }
