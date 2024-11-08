@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
     View,
     Text,
@@ -18,6 +18,8 @@ import colors from '@constants/Colors';
 type Line = {
     lineNumber: string;
     lineName: string;
+    lineRouteId: string;
+    mainPath: string;
 };
 
 type Agency = {
@@ -32,7 +34,6 @@ type Filter = 'all' | 'bus' | 'subte' | 'favorites' | 'alerts';
 
 const Lines: React.FC = () => {
     const { useFetchAgencies } = useAPI();
-
     const {
         data: agencies = [],
         isLoading: agenciesLoading,
@@ -55,15 +56,15 @@ const Lines: React.FC = () => {
         setSelectedFilter(filter);
     }, []);
 
-    const filteredAgencies = agencies.filter((agency) => {
-        if (selectedFilter === 'bus') {
-            return agency.agency_type === 'bus';
-        }
-        if (selectedFilter === 'subte') {
-            return agency.agency_type === 'subte';
-        }
-        return true;
-    });
+    // Filtrar agencias de acuerdo al filtro seleccionado
+    const filteredAgencies = useMemo(() => {
+        return agencies.filter((agency) => {
+            if (selectedFilter === 'bus') return agency.agency_type === 'bus';
+            if (selectedFilter === 'subte')
+                return agency.agency_type === 'subte';
+            return true;
+        });
+    }, [agencies, selectedFilter]);
 
     const renderAgency: ListRenderItem<Agency> = ({ item }) => (
         <View style={styles.agencyContainer}>

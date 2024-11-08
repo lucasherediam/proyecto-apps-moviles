@@ -5,11 +5,19 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 type BusNumberBadgeProps = {
     routeNumber: string;
     agencyColor: string;
+    details?: boolean;
 };
 
-const BusNumberBadge = ({ routeNumber, agencyColor }: BusNumberBadgeProps) => {
-    // console.log('BusNumberBadge:', routeNumber, agencyColor);
-    const formattedRouteNumber = routeNumber.match(/^\d+/)?.[0] || routeNumber;
+const BusNumberBadge = ({
+    routeNumber,
+    agencyColor,
+    details,
+}: BusNumberBadgeProps) => {
+    // Define formattedRouteNumber con el valor adecuado según expanded
+    let formattedRouteNumber = details
+        ? routeNumber
+        : routeNumber.match(/^\d+/)?.[0] || routeNumber;
+
     return (
         <View style={styles.badgeContainer}>
             <View style={styles.iconAndText}>

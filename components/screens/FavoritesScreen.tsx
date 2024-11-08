@@ -11,6 +11,12 @@ import {
 import useAPI from '@/hooks/useApi';
 import colors from '@/constants/Colors';
 
+type Line = {
+    route_id: string;
+    route_short_name: string;
+    route_desc: string;
+};
+
 const FavoritesScreen = () => {
     const { useFetchFavorites } = useAPI();
     const { data: favoriteLines, isLoading, error } = useFetchFavorites();
@@ -20,10 +26,13 @@ const FavoritesScreen = () => {
         Alert.alert('Error', 'Hubo un problema al conectar con la API.');
     }
 
-    // Renderizar cada línea favorita
-    const renderFavoriteItem = ({ item }: { item: string }) => (
+    // Renderizar cada línea favorita con los datos del backend
+    const renderFavoriteItem = ({ item }: { item: Line }) => (
         <View style={styles.favoriteItem}>
-            <Text style={styles.text}>Línea {item}</Text>
+            <Text style={styles.routeName}>Línea {item.route_short_name}</Text>
+            <Text style={styles.routeDesc}>
+                {item.route_desc || 'Sin descripción'}
+            </Text>
         </View>
     );
 
@@ -35,7 +44,7 @@ const FavoritesScreen = () => {
             ) : favoriteLines && favoriteLines.length > 0 ? (
                 <FlatList
                     data={favoriteLines}
-                    keyExtractor={(item) => item}
+                    keyExtractor={(item) => item.route_id}
                     renderItem={renderFavoriteItem}
                 />
             ) : (
@@ -59,11 +68,15 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         color: colors.textPrimary,
     },
-    text: {
-        padding: 10,
-        backgroundColor: colors.cardBackground,
-        marginBottom: 5,
+    routeName: {
+        fontSize: 16,
+        fontWeight: 'bold',
         color: colors.textPrimary,
+    },
+    routeDesc: {
+        fontSize: 14,
+        color: colors.textSecondary,
+        marginTop: 5,
     },
     favoriteItem: {
         padding: 10,

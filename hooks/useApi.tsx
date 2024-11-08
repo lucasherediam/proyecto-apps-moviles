@@ -1,17 +1,13 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
-
+import { useEffect, useState } from 'react';
+import * as SecureStore from 'expo-secure-store';
 const BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
-const userId = '1';
 
 type Line = {
     lineNumber: string;
     lineName: string;
     mainPath: string;
-};
-
-type Route = {
-    route_short_name: string;
-    route_desc?: string;
+    lineRouteId: string;
 };
 
 type Agency = {
@@ -22,18 +18,16 @@ type Agency = {
     routes: Line[];
 };
 
-// Funcion para agrupar rutas por mainPath
-const groupRoutesByMainPath = (routes: Route[]) => {
+// Función para agrupar rutas por mainPath
+const groupRoutesByMainPath = (
+    routes: { route_short_name: string; route_desc?: string }[],
+) => {
     const grouped: Record<string, Record<string, Line>> = {};
-
     routes.forEach((route) => {
-        if (typeof route.route_short_name !== 'string') return;
-
         const lineNumberMatch = route.route_short_name.match(/^\d+/);
         if (lineNumberMatch) {
             const lineNumber = lineNumberMatch[0];
             const mainPath = route.route_desc?.split(':')[0].trim() || '';
-
             if (!grouped[lineNumber]) {
                 grouped[lineNumber] = {};
             }
@@ -42,6 +36,7 @@ const groupRoutesByMainPath = (routes: Route[]) => {
                 grouped[lineNumber][mainPath] = {
                     lineNumber,
                     lineName: route.route_short_name,
+                    lineRouteId: route.route_id,
                     mainPath,
                 };
             }
@@ -53,30 +48,31 @@ const groupRoutesByMainPath = (routes: Route[]) => {
     }));
 };
 
-// Funcion para obtener la lista inicial de favoritos
-const fetchFavorites = async (): Promise<string[]> => {
+// Función para obtener la lista inicial de favoritos
+const fetchFavorites = async (userId: string): Promise<string[]> => {
     const response = await fetch(`${BASE_URL}/api/user/${userId}/favorites`);
     if (!response.ok) throw new Error('Failed to fetch favorites');
     const { favorites } = await response.json();
     return favorites;
 };
 
-// Funcion para actualizar el estado de favorito de una linea
-const updateFavoriteStatus = async (
-    lineNumber: string,
+// Función para actualizar el estado de favorito de una línea
+const updateFavorite = async (
+    lineRouteId: string,
     isFavorite: boolean,
+    userId: string,
 ): Promise<void> => {
     const method = isFavorite ? 'DELETE' : 'POST';
     const response = await fetch(`${BASE_URL}/api/user/${userId}/favorite`, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lineNumber }),
+        body: JSON.stringify({ lineRouteId }), // Cambiar a lineRouteId
     });
 
     if (!response.ok) throw new Error('Failed to update favorite status');
 };
 
-// Funcion para obtener agencias
+// Función para obtener agencias
 const fetchAgencies = async (): Promise<Agency[]> => {
     const response = await fetch(`${BASE_URL}/api/bus-agencies/`);
     if (!response.ok) throw new Error(`Error: ${response.statusText}`);
@@ -92,6 +88,16 @@ const fetchAgencies = async (): Promise<Agency[]> => {
 };
 
 const useAPI = () => {
+    const [userId, setUserId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchUserId = async () => {
+            const id = await SecureStore.getItemAsync('deviceFingerprint');
+            setUserId(id);
+        };
+        fetchUserId();
+    }, []);
+
     // Hook para obtener agencias
     const useFetchAgencies = (): UseQueryResult<Agency[], Error> =>
         useQuery({
@@ -103,10 +109,20 @@ const useAPI = () => {
     const useFetchFavorites = (): UseQueryResult<string[], Error> =>
         useQuery({
             queryKey: ['favorites', userId],
-            queryFn: fetchFavorites,
+            queryFn: () => fetchFavorites(userId as string),
+            enabled: !!userId, // Solo ejecuta la consulta si userId está disponible
         });
 
-    return { useFetchAgencies, useFetchFavorites, updateFavoriteStatus };
+    // Modificación en toggleFavoriteStatus para usar userId directamente desde el estado
+    const toggleFavoriteStatus = async (
+        lineNumber: string,
+        isFavorite: boolean,
+    ) => {
+        if (!userId) return;
+        return updateFavorite(lineNumber, isFavorite, userId); // No es necesario pasar userId como argumento separado
+    };
+
+    return { useFetchAgencies, useFetchFavorites, toggleFavoriteStatus };
 };
 
 export default useAPI;

@@ -22,13 +22,7 @@ const RenderGroupedLine: React.FC<RenderGroupedLineProps> = ({
     toggleExpandLine,
     isExpanded,
 }) => {
-    const { favoriteLines, toggleFavorite } = useFavorites();
-
-    const isFavorite = favoriteLines.includes(line.lineNumber);
-
-    const handleFavoriteToggle = useCallback(() => {
-        toggleFavorite(line.lineNumber);
-    }, [line.lineNumber, toggleFavorite]);
+    const { favoriteRoutes, toggleFavorite } = useFavorites();
 
     return (
         <View style={styles.lineContainer}>
@@ -41,36 +35,53 @@ const RenderGroupedLine: React.FC<RenderGroupedLineProps> = ({
                     <Text style={styles.lineTitle}>
                         Línea {line.lineNumber}
                     </Text>
-                    <TouchableOpacity
-                        style={styles.favoriteButton}
-                        onPress={handleFavoriteToggle}
-                    >
-                        <Ionicons
-                            name={isFavorite ? 'heart' : 'heart-outline'}
-                            size={24}
-                            color={
-                                isFavorite ? colors.primary : colors.textPrimary
-                            }
-                        />
-                    </TouchableOpacity>
                 </View>
             </TouchableOpacity>
             {isExpanded && (
                 <View style={styles.expandedContainer}>
-                    {line.routes?.map((route, index) => (
-                        <View
-                            key={`${route.lineName}-${index}`}
-                            style={styles.routeContainer}
-                        >
-                            <BusNumberBadge
-                                routeNumber={route.lineNumber}
-                                agencyColor={agencyColor}
-                            />
-                            <Text style={styles.routeDesc}>
-                                {route.mainPath}
-                            </Text>
-                        </View>
-                    ))}
+                    {line.routes?.map((route, index) => {
+                        const isFavorite = favoriteRoutes.includes(
+                            route.lineRouteId,
+                        ); // Cambia a lineRouteId
+
+                        const handleFavoriteToggle = () => {
+                            toggleFavorite(route.lineRouteId); // Cambia a lineRouteId
+                        };
+
+                        return (
+                            <View
+                                key={`${route.lineName}-${index}`}
+                                style={styles.routeContainer}
+                            >
+                                <BusNumberBadge
+                                    routeNumber={route.lineName}
+                                    agencyColor={agencyColor}
+                                    details={true}
+                                />
+                                <Text style={styles.routeDesc}>
+                                    {route.mainPath}
+                                </Text>
+                                <TouchableOpacity
+                                    style={styles.favoriteButton}
+                                    onPress={handleFavoriteToggle}
+                                >
+                                    <Ionicons
+                                        name={
+                                            isFavorite
+                                                ? 'heart'
+                                                : 'heart-outline'
+                                        }
+                                        size={24}
+                                        color={
+                                            isFavorite
+                                                ? colors.primary
+                                                : colors.textPrimary
+                                        }
+                                    />
+                                </TouchableOpacity>
+                            </View>
+                        );
+                    })}
                 </View>
             )}
         </View>
