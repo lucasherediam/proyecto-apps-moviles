@@ -7,10 +7,11 @@ import React, {
     useEffect,
 } from 'react';
 import { Text } from 'react-native';
+import { useQueryClient } from '@tanstack/react-query';
 import useAPI from '@/hooks/useApi';
 
 type FavoriteContextType = {
-    favoriteRoutes: string[]; // Cambiado a favoriteRoutes para reflejar que ahora son ramales
+    favoriteRoutes: string[]; // Ahora es un array solo de `lineRouteId`
     toggleFavorite: (lineRouteId: string) => void;
 };
 
@@ -19,19 +20,22 @@ const FavoriteContext = createContext<FavoriteContextType | undefined>(
 );
 
 export const FavoriteProvider = ({ children }: { children: ReactNode }) => {
-    const [favoriteRoutes, setFavoriteRoutes] = useState<string[]>([]); // Cambia el estado a favoriteRoutes
-    const { useFetchFavorites, toggleFavoriteStatus } = useAPI(); // Cambia updateFavorite por toggleFavoriteStatus
+    const [favoriteRoutes, setFavoriteRoutes] = useState<string[]>([]);
+    const { useFetchFavorites, toggleFavoriteStatus } = useAPI();
+    const queryClient = useQueryClient();
 
     const { data: fetchedFavorites, isLoading, error } = useFetchFavorites();
 
-    // Cargar favoritos obtenidos del API en el estado local cuando estén disponibles
+    // Cargar favoritos desde la API en el estado local cuando estén disponibles
     useEffect(() => {
         if (fetchedFavorites) {
-            setFavoriteRoutes(fetchedFavorites);
+            setFavoriteRoutes(
+                fetchedFavorites.map((fav) => fav.lineRouteId || fav.route_id),
+            );
         }
     }, [fetchedFavorites]);
 
-    // Función para alternar el estado de favorito de un ramal individual
+    // Función para alternar el estado de favorito
     const toggleFavorite = useCallback(
         async (lineRouteId: string) => {
             const isCurrentlyFavorite = favoriteRoutes.includes(lineRouteId);
@@ -39,23 +43,25 @@ export const FavoriteProvider = ({ children }: { children: ReactNode }) => {
                 ? favoriteRoutes.filter((fav) => fav !== lineRouteId)
                 : [...favoriteRoutes, lineRouteId];
 
-            // Actualizar el estado local de favoritos
+            // Actualiza el estado local de inmediato para reflejar el cambio en la UI
             setFavoriteRoutes(updatedFavorites);
 
             try {
-                // Actualizar el estado de favorito en el servidor
+                // Realiza la actualización en el servidor
                 await toggleFavoriteStatus(lineRouteId, isCurrentlyFavorite);
+
+                // Invalida y actualiza la consulta de favoritos para sincronizar con el servidor
+                queryClient.invalidateQueries(['favorites']);
             } catch (error) {
                 console.error('Error updating favorite status:', error);
 
-                // Revertir el cambio local en caso de error en el servidor
+                // Revertir el cambio local si hay un error en el servidor
                 setFavoriteRoutes(favoriteRoutes);
             }
         },
-        [favoriteRoutes, toggleFavoriteStatus],
+        [favoriteRoutes, toggleFavoriteStatus, queryClient],
     );
 
-    // Mostrar un mensaje de carga o error si ocurre durante la carga de favoritos
     if (isLoading) return <Text>Loading favorites...</Text>;
     if (error) console.error('Error fetching favorites:', error);
 
