@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import BusNumberBadge from '@components/BusNumberBadge';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,7 +9,12 @@ import { useFavorites } from '@/context/FavoriteContext';
 type RenderGroupedLineProps = {
     line: {
         lineNumber: string;
-        routes?: { lineName: string; lineNumber: string; mainPath: string }[];
+        routes?: {
+            lineName: string;
+            lineNumber: string;
+            lineRouteId: string;
+            mainPath: string;
+        }[];
     };
     agencyColor: string;
     toggleExpandLine: (lineNumber: string) => void;
@@ -42,11 +47,7 @@ const RenderGroupedLine: React.FC<RenderGroupedLineProps> = ({
                     {line.routes?.map((route, index) => {
                         const isFavorite = favoriteRoutes.includes(
                             route.lineRouteId,
-                        ); // Cambia a lineRouteId
-
-                        const handleFavoriteToggle = () => {
-                            toggleFavorite(route.lineRouteId); // Cambia a lineRouteId
-                        };
+                        );
 
                         return (
                             <View
@@ -63,7 +64,9 @@ const RenderGroupedLine: React.FC<RenderGroupedLineProps> = ({
                                 </Text>
                                 <TouchableOpacity
                                     style={styles.favoriteButton}
-                                    onPress={handleFavoriteToggle}
+                                    onPress={() =>
+                                        toggleFavorite(route.lineRouteId)
+                                    }
                                 >
                                     <Ionicons
                                         name={

@@ -119,7 +119,7 @@ const useAPI = () => {
         isFavorite: boolean,
     ) => {
         if (!userId) return;
-        return updateFavorite(lineNumber, isFavorite, userId); // No es necesario pasar userId como argumento separado
+        return updateFavorite(lineNumber, isFavorite, userId);
     };
 
     return { useFetchAgencies, useFetchFavorites, toggleFavoriteStatus };

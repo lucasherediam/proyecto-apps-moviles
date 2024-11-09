@@ -14,6 +14,7 @@ import RenderGroupedLine from '@components/RenderGroupedLine';
 import Favorites from '@components/screens/FavoritesScreen';
 import AlertsScreen from '@components/screens/AlertsScreen';
 import colors from '@constants/Colors';
+import { useFavorites } from '@/context/FavoriteContext';
 
 type Line = {
     lineNumber: string;
@@ -34,12 +35,7 @@ type Filter = 'all' | 'bus' | 'subte' | 'favorites' | 'alerts';
 
 const Lines: React.FC = () => {
     const { useFetchAgencies } = useAPI();
-    const {
-        data: agencies = [],
-        isLoading: agenciesLoading,
-        isError: agenciesError,
-    } = useFetchAgencies();
-
+    const { data: agencies = [], isLoading, isError } = useFetchAgencies();
     const [expandedLines, setExpandedLines] = useState<Record<string, boolean>>(
         {},
     );
@@ -66,37 +62,30 @@ const Lines: React.FC = () => {
         });
     }, [agencies, selectedFilter]);
 
-    const renderAgency: ListRenderItem<Agency> = ({ item }) => (
-        <View style={styles.agencyContainer}>
-            <Text style={styles.agencyTitle}>{item.agency_name}</Text>
-            {item.routes.map((line, index) => (
-                <RenderGroupedLine
-                    key={`${line.lineNumber}-${index}`}
-                    line={line}
-                    agencyColor={item.agency_color}
-                    toggleExpandLine={toggleExpandLine}
-                    isExpanded={expandedLines[line.lineNumber]}
-                />
-            ))}
-        </View>
+    const renderAgency: ListRenderItem<Agency> = useCallback(
+        ({ item }) => (
+            <View style={styles.agencyContainer}>
+                <Text style={styles.agencyTitle}>{item.agency_name}</Text>
+                {item.routes.map((line, index) => (
+                    <RenderGroupedLine
+                        key={`${line.lineNumber}-${index}`}
+                        line={line}
+                        agencyColor={item.agency_color}
+                        toggleExpandLine={toggleExpandLine}
+                        isExpanded={expandedLines[line.lineNumber]}
+                    />
+                ))}
+            </View>
+        ),
+        [expandedLines, toggleExpandLine],
     );
 
-    if (agenciesLoading) {
-        return (
-            <SafeAreaView style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={colors.primary} />
-            </SafeAreaView>
-        );
+    if (isLoading) {
+        return <LoadingIndicator />;
     }
 
-    if (agenciesError) {
-        return (
-            <SafeAreaView style={styles.errorContainer}>
-                <Text style={styles.errorText}>
-                    Error: {agenciesError || 'Error loading agencies'}
-                </Text>
-            </SafeAreaView>
-        );
+    if (isError) {
+        return <ErrorDisplay message={isError || 'Error loading agencies'} />;
     }
 
     let content;
@@ -125,6 +114,18 @@ const Lines: React.FC = () => {
         </SafeAreaView>
     );
 };
+
+const LoadingIndicator: React.FC = () => (
+    <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary} />
+    </SafeAreaView>
+);
+
+const ErrorDisplay: React.FC<{ message: string }> = ({ message }) => (
+    <SafeAreaView style={styles.errorContainer}>
+        <Text style={styles.errorText}>Error: {message}</Text>
+    </SafeAreaView>
+);
 
 const styles = StyleSheet.create({
     container: {
