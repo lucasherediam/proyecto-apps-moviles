@@ -6,6 +6,7 @@ import {
     SectionList,
     TouchableOpacity,
     ActivityIndicator,
+    Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
@@ -90,15 +91,26 @@ export default function StopDetails() {
     }, [stopRoutes]);
 
     const handleItemPress = (item) => {
-        router.push({
-            pathname: '/route/route-details',
-            params: {
-                routeId: item.route_id,
-                vehiclesPosition: JSON.stringify(item.positions),
-                userLatitude: userLatitude,
-                userLongitude: userLongitude,
-            },
-        });
+        // Verifica si el número de colectivos activos es cero
+        if (item.positions.length === 0) {
+            // Muestra una alerta si no hay colectivos activos
+            Alert.alert(
+                'Sin colectivos activos',
+                'No hay colectivos activos en este ramal en este momento.',
+                [{ text: 'OK' }],
+            );
+        } else {
+            // Si hay colectivos, navega a la pantalla de detalles de la ruta
+            router.push({
+                pathname: '/route/route-details',
+                params: {
+                    routeId: item.route_id,
+                    vehiclesPosition: JSON.stringify(item.positions),
+                    userLatitude: userLatitude,
+                    userLongitude: userLongitude,
+                },
+            });
+        }
     };
 
     const renderRouteItem = ({ item }) => (
