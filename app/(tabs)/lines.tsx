@@ -139,9 +139,12 @@ const Lines: React.FC = () => {
 };
 
 const LoadingIndicator: React.FC = () => (
-    <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-    </SafeAreaView>
+    <Screen phauto pt={0}>
+        <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={Colors.primary} />
+            <Text style={styles.loadingText}>Cargando...</Text>
+        </View>
+    </Screen>
 );
 
 const ErrorDisplay: React.FC<{ message: string }> = ({ message }) => (
@@ -154,11 +157,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: Colors.background,
-    },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
     },
     errorContainer: {
         flex: 1,
@@ -177,6 +175,19 @@ const styles = StyleSheet.create({
         color: Colors.textPrimary,
         backgroundColor: Colors.cardBackground,
         padding: 8,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+        backgroundColor: Colors.background,
+    },
+    loadingText: {
+        fontSize: 18,
+        color: Colors.textPrimary,
+        marginTop: 10,
+        textAlign: 'center',
     },
 });
 
