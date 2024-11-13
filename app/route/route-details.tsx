@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState, useRef } from 'react';
 import { View, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
@@ -10,12 +11,13 @@ type Coordinate = {
 };
 
 export default function RouteDetails() {
-    const { routeId, userLatitude, userLongitude } = useLocalSearchParams<{
-        routeId?: string;
-        userLatitude?: string;
-        userLongitude?: string;
-    }>();
-
+    const { routeId, vehiclesPosition, userLatitude, userLongitude } =
+        useLocalSearchParams<{
+            routeId?: string;
+            vehiclesPosition?: any;
+            userLatitude?: string;
+            userLongitude?: string;
+        }>();
     const [routeShape, setRouteShape] = useState<Coordinate[]>([]);
     const [stops, setStops] = useState<Coordinate[]>([]);
     const [midPoint, setMidPoint] = useState<Coordinate | null>(null);
@@ -117,14 +119,18 @@ export default function RouteDetails() {
         }
     }, [routeShape, userLatitude, userLongitude]);
 
-    if (!midPoint || !routeShape.length || !stops.length) {
+    if (
+        !midPoint ||
+        !routeShape.length ||
+        !stops.length ||
+        !vehiclesPosition.length
+    ) {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="blue" />
             </View>
         );
     }
-
     return (
         <View style={styles.container}>
             <MapView
@@ -154,6 +160,18 @@ export default function RouteDetails() {
                         </View>
                     </Marker>
                 ))}
+                {/* Mostrar la posición de los vehículos */}
+                {JSON.parse(vehiclesPosition).map(
+                    (vehicle: any, index: number) => (
+                        <Marker
+                            key={index}
+                            coordinate={{
+                                latitude: vehicle.latitude,
+                                longitude: vehicle.longitude,
+                            }}
+                        ></Marker>
+                    ),
+                )}
             </MapView>
         </View>
     );

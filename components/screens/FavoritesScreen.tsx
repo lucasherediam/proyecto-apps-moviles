@@ -9,7 +9,7 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import useAPI from '@/hooks/useApi';
-import colors from '@/constants/Colors';
+import { Colors } from '@/constants/Colors';
 
 type Line = {
     route_id: string;
@@ -40,7 +40,7 @@ const FavoritesScreen = () => {
         <View style={styles.container}>
             <Text style={styles.header}>Favoritos</Text>
             {isLoading ? (
-                <ActivityIndicator size="large" color={colors.primary} />
+                <ActivityIndicator size="large" color={Colors.primary} />
             ) : favoriteLines && favoriteLines.length > 0 ? (
                 <FlatList
                     data={favoriteLines}
@@ -59,34 +59,34 @@ const FavoritesScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background,
+        backgroundColor: Colors.background,
         padding: 10,
     },
     header: {
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 10,
-        color: colors.textPrimary,
+        color: Colors.textPrimary,
     },
     routeName: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: colors.textPrimary,
+        color: Colors.textPrimary,
     },
     routeDesc: {
         fontSize: 14,
-        color: colors.textSecondary,
+        color: Colors.textSecondary,
         marginTop: 5,
     },
     favoriteItem: {
         padding: 10,
-        backgroundColor: colors.cardBackground,
+        backgroundColor: Colors.cardBackground,
         borderRadius: 5,
         marginBottom: 10,
     },
     noFavoritesText: {
         fontSize: 16,
-        color: colors.textSecondary,
+        color: Colors.textSecondary,
         textAlign: 'center',
         marginTop: 20,
     },

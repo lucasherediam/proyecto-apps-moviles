@@ -8,7 +8,9 @@ import { router } from 'expo-router';
 import useCurrentLocation from '@hooks/useCurrentLocation';
 import useNearbyTransit from '@hooks/useNearbyTransit';
 import { debounce } from 'lodash';
-
+import { darkMapStyle } from '@/constants/Colors';
+import { MaterialIcons } from '@expo/vector-icons';
+import { Colors } from '@/constants/Colors';
 const MemoizedBusStopIcon = React.memo(BusStopIcon);
 const MemoizedSubwayStationIcon = React.memo(SubwayStationIcon);
 
@@ -71,23 +73,7 @@ export default function Home() {
                 radius={60} // Ajuste para el radio de agrupamiento, puede aumentarse para clusters mayores
                 minPoints={3} // Establece un tamaño mínimo de puntos para formar un clúster
                 showsPointsOfInterest={false} // Para iOS
-                customMapStyle={[
-                    {
-                        featureType: 'poi',
-                        elementType: 'labels',
-                        stylers: [{ visibility: 'off' }],
-                    },
-                    {
-                        featureType: 'transit',
-                        elementType: 'labels',
-                        stylers: [{ visibility: 'off' }],
-                    },
-                    {
-                        featureType: 'road',
-                        elementType: 'labels.icon',
-                        stylers: [{ visibility: 'off' }],
-                    },
-                ]} // Para Android
+                customMapStyle={darkMapStyle} // Para Android
                 showsMyLocationButton={false}
             >
                 {visibleStops.map((stop) => (
@@ -138,7 +124,7 @@ export default function Home() {
                 style={styles.locationButton}
                 onPress={goToUserLocation}
             >
-                <Text style={styles.buttonText}>📍</Text>
+                <MaterialIcons name="my-location" size={24} color="white" />
             </TouchableOpacity>
         </View>
     );
@@ -147,13 +133,13 @@ export default function Home() {
 const styles = StyleSheet.create({
     locationButton: {
         position: 'absolute',
-        bottom: 20,
+        bottom: 60,
         right: 20,
-        backgroundColor: 'white',
+        backgroundColor: Colors.cardBackground,
         padding: 10,
         borderRadius: 50,
-        elevation: 5, // Sombra para Android
-        shadowColor: '#000', // Sombra para iOS
+        elevation: 5,
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.8,
         shadowRadius: 2,

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
-import colors from '@/constants/Colors';
-import Colors from '@/constants/Colors';
+import { Colors } from '@/constants/Colors';
 import AnimatedAlert from '@/components/AnimatedAlert';
 
 type SubwayAlert = {
@@ -62,12 +61,12 @@ const AlertsScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background,
+        backgroundColor: Colors.background,
         padding: 10,
     },
     title: {
         fontSize: 24,
-        color: colors.textPrimary,
+        color: Colors.textPrimary,
         marginBottom: 10,
         textAlign: 'center',
     },

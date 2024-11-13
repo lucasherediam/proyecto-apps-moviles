@@ -1,28 +1,40 @@
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Colors from '@constants/Colors';
-import Spacing from '@constants/Spacing';
+import { Colors } from '@constants/Colors';
 import { StatusBar } from 'expo-status-bar';
+import Spacing from '@constants/Spacing';
 
 type ScreenProps = {
     children: React.ReactNode;
-    stack?: boolean;
-    map?: boolean;
+    ph?: number;
+    phauto?: boolean;
+    pt?: number;
+    pb?: number;
+    statusBar?: 'light' | 'dark';
 };
 
-export function Screen({ children, stack = false, map = false }: ScreenProps) {
+export function Screen({
+    children,
+    ph,
+    phauto,
+    pt,
+    pb,
+    statusBar,
+}: ScreenProps) {
     const insets = useSafeAreaInsets();
+
     return (
         <View
             style={{
                 flex: 1,
-                paddingTop: stack ? 0 : insets.top,
-                paddingBottom: insets.bottom,
-                paddingHorizontal: map ? 0 : Spacing.padding.base,
+                paddingTop: pt ?? insets.top,
+                paddingBottom: pb ?? insets.bottom,
+                paddingHorizontal:
+                    ph !== undefined ? ph : phauto ? Spacing.padding.base : 0,
                 backgroundColor: Colors.background,
             }}
         >
-            <StatusBar style="light" />
+            <StatusBar style={statusBar || 'light'} />
             {children}
         </View>
     );

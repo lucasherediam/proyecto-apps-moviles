@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState, useLayoutEffect } from 'react';
 import {
     View,
@@ -5,13 +6,13 @@ import {
     StyleSheet,
     FlatList,
     TouchableOpacity,
-    ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { Screen } from '@/components/Screen';
-import Colors from '@/constants/Colors';
+import { Colors } from '@/constants/Colors';
 import BusNumberBadge from '@components/BusNumberBadge';
+import useAPI, { fetchRealTimePosition } from '@/hooks/useApi';
 
 type BusRouteItem = {
     route_id: string;
@@ -22,47 +23,62 @@ type BusRouteItem = {
 
 export default function StopDetails() {
     const { id, name, userLatitude, userLongitude } = useLocalSearchParams();
+    const [vehiclesAvailable, setVehicleAvailability] = useState([]);
     const router = useRouter();
     const navigation = useNavigation();
-    const [stop, setStop] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { useFetchRoutesForStop } = useAPI();
+    const { data: stopRoutes, isLoading } = useFetchRoutesForStop(id as string);
 
-    useEffect(() => {
-        const fetchData = async () => {
+    useLayoutEffect(() => {
+        if (!stopRoutes) return;
+
+        const fetchPositions = async () => {
             try {
-                setLoading(true);
-                const response = await fetch(
-                    `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/bus-stops/${id}/buses`,
+                const routeIds = stopRoutes.map((route) => route.route_id);
+
+                // Fetch vehicle positions for all route IDs in parallel
+                const vehicles = (
+                    await Promise.all(
+                        routeIds.map((id) => fetchRealTimePosition(id)),
+                    )
+                ).flat();
+
+                // Group vehicles by route_id for easy access
+                const vehiclesByRouteId = vehicles.reduce((acc, vehicle) => {
+                    if (!acc[vehicle.route_id]) acc[vehicle.route_id] = [];
+                    acc[vehicle.route_id].push({
+                        latitude: vehicle.latitude,
+                        longitude: vehicle.longitude,
+                    });
+                    return acc;
+                }, {});
+
+                // Extract route IDs with available vehicles
+                const activeRouteIds = new Set(
+                    vehicles.map((vehicle) => vehicle.route_id),
                 );
-                const data = await response.json();
-                setStop(data);
-                setLoading(false);
+
+                // Filter stopRoutes and add vehicle positions if available
+                const availableRoutes = stopRoutes
+                    .filter((route) => activeRouteIds.has(route.route_id))
+                    .map((route) => ({
+                        ...route,
+                        positions: vehiclesByRouteId[route.route_id] || [],
+                    }));
+                setVehicleAvailability(availableRoutes);
             } catch (error) {
-                console.error('Error fetching bus stops:', error);
-                setLoading(false);
+                console.error('Error fetching vehicle positions:', error);
             }
         };
 
-        fetchData();
-    }, [id]);
+        fetchPositions();
 
-    useLayoutEffect(() => {
-        if (stop) {
-            navigation.setOptions({
-                title: `${name}`,
-            });
-        }
-    }, [stop, navigation]);
+        navigation.setOptions({
+            title: name,
+        });
+    }, [stopRoutes, name, navigation]);
 
-    if (loading) {
-        return (
-            <Screen>
-                <ActivityIndicator size="large" color={Colors.textPrimary} />
-            </Screen>
-        );
-    }
-
-    if (!stop) {
+    if (!stopRoutes && isLoading) {
         return (
             <Screen>
                 <Text style={styles.errorText}>Parada no encontrada</Text>
@@ -75,32 +91,28 @@ export default function StopDetails() {
             pathname: '/route/route-details',
             params: {
                 routeId: item.route_id,
-                routeName: item.route_short_name,
+                vehiclesPosition: JSON.stringify(item.positions),
                 userLatitude: userLatitude,
                 userLongitude: userLongitude,
             },
         });
     };
-
-    const renderSeparator = () => {
-        return <View style={styles.separator} />;
-    };
-
     return (
-        <Screen stack>
+        <Screen phauto pt={0}>
             <View style={styles.headerContainer}>
                 <Text style={styles.headerTitle}>{name}</Text>
                 <Text style={styles.subHeader}>Próximas llegadas</Text>
             </View>
             <FlatList
-                data={stop}
-                keyExtractor={(item) => item.route_id}
+                data={vehiclesAvailable}
+                keyExtractor={(item, index) => `${item.route_id}-${index}`}
                 renderItem={({ item }) => (
                     <TouchableOpacity onPress={() => handleItemPress(item)}>
                         <View style={styles.itemContainer}>
                             <BusNumberBadge
                                 routeNumber={item.route_short_name}
                                 agencyColor={item.agency_color}
+                                details={true}
                             />
                             <Text style={styles.routeDesc}>
                                 {item.trip_headsigns}
@@ -113,12 +125,13 @@ export default function StopDetails() {
                         </View>
                     </TouchableOpacity>
                 )}
-                ItemSeparatorComponent={renderSeparator}
-                ListFooterComponent={renderSeparator}
+                ItemSeparatorComponent={() => <View style={styles.separator} />}
+                ListFooterComponent={() => <View style={styles.separator} />}
             />
         </Screen>
     );
 }
+
 const styles = StyleSheet.create({
     headerContainer: {
         padding: 16,

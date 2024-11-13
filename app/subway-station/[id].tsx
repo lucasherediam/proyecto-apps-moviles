@@ -11,7 +11,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { Screen } from '@/components/Screen';
-import Colors from '@/constants/Colors';
+import { Colors } from '@/constants/Colors';
 import Spacing from '@/constants/Spacing';
 import { FontAwesome } from '@expo/vector-icons';
 import StationHeader from '@/components/StationHeader';
@@ -134,16 +134,16 @@ export default function StationDetails() {
                 keyExtractor={(item) => item.destination}
                 renderItem={({ item }) => (
                     <ArrivalItem
-                    destination={item.destination}
-                    remainingTime={item.departure.remainingTime}
-                />
+                        destination={item.destination}
+                        remainingTime={item.departure.remainingTime}
+                    />
                 )}
                 ItemSeparatorComponent={renderSeparator}
                 ListFooterComponent={renderSeparator}
             />
         );
-    }
-    
+    };
+
     return (
         <Screen stack>
             {station && (
@@ -153,9 +153,7 @@ export default function StationDetails() {
                     onPress={() => handleItemPress(station)}
                 />
             )}
-            {
-            arrivals.length == 0 ? noArrivalsFound() : arrivalsFound()    
-            }
+            {arrivals.length == 0 ? noArrivalsFound() : arrivalsFound()}
         </Screen>
     );
 }

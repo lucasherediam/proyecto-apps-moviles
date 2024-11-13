@@ -2,7 +2,7 @@ import React from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native';
-import Colors from '@constants/Colors';
+import { Colors } from '@constants/Colors';
 export default function WorkoutLayout() {
     const router = useRouter();
 

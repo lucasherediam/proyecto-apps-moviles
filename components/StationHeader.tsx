@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import Colors from '@/constants/Colors';
+import { Colors } from '@/constants/Colors';
 
 type StationHeaderProps = {
     name: string;
@@ -8,10 +8,19 @@ type StationHeaderProps = {
     onPress: () => void;
 };
 
-const StationHeader: React.FC<StationHeaderProps> = ({ name, color, onPress }) => {
+const StationHeader: React.FC<StationHeaderProps> = ({
+    name,
+    color,
+    onPress,
+}) => {
     return (
         <Pressable onPress={onPress}>
-            <View style={[styles.headerContainer, { backgroundColor: color || Colors.primary }]}>
+            <View
+                style={[
+                    styles.headerContainer,
+                    { backgroundColor: color || Colors.primary },
+                ]}
+            >
                 <Text style={styles.headerTitle}>{name}</Text>
                 <Text style={styles.subHeader}>Próximas llegadas</Text>
             </View>

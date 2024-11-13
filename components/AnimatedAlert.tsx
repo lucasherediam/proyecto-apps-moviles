@@ -1,7 +1,7 @@
 // AnimatedAlert.tsx
 import React, { useEffect, useRef } from 'react';
 import { Text, StyleSheet, Animated, Easing, Dimensions } from 'react-native';
-import colors from '@/constants/Colors';
+import { Colors } from '@/constants/Colors';
 
 type SubwayAlertProps = {
     route_short_name: string;
@@ -10,7 +10,10 @@ type SubwayAlertProps = {
 
 const { width } = Dimensions.get('window');
 
-const AnimatedAlert: React.FC<SubwayAlertProps> = ({ route_short_name, message }) => {
+const AnimatedAlert: React.FC<SubwayAlertProps> = ({
+    route_short_name,
+    message,
+}) => {
     const translateX = useRef(new Animated.Value(width)).current;
     const alertText = `${route_short_name}: ${message}`;
 
@@ -21,12 +24,14 @@ const AnimatedAlert: React.FC<SubwayAlertProps> = ({ route_short_name, message }
                 duration: 20000,
                 easing: Easing.linear,
                 useNativeDriver: true,
-            })
+            }),
         ).start();
     }, [translateX]);
 
     return (
-        <Animated.View style={[styles.alertContainer, { transform: [{ translateX }] }]}>
+        <Animated.View
+            style={[styles.alertContainer, { transform: [{ translateX }] }]}
+        >
             <Text style={styles.animatedText}>{alertText}</Text>
         </Animated.View>
     );
@@ -46,7 +51,7 @@ const styles = StyleSheet.create({
         elevation: 5, // Para la sombra en Android
     },
     animatedText: {
-        color: colors.textPrimary,
+        color: Colors.textPrimary,
         fontSize: 16,
         fontWeight: '500',
     },

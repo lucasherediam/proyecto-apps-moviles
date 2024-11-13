@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import colors from '@/constants/Colors';
+import { Colors } from '@/constants/Colors';
 
 type Filter = 'all' | 'bus' | 'subte' | 'favorites' | 'alerts';
 
@@ -60,16 +60,16 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         paddingHorizontal: 12,
         borderRadius: 20,
-        backgroundColor: colors.background,
+        backgroundColor: Colors.background,
     },
     filterButtonActive: {
-        backgroundColor: colors.primary, // Color para el filtro activo
+        backgroundColor: Colors.primary, // Color para el filtro activo
     },
     filterTextActive: {
-        color: colors.textSecondary, // Color para el texto del filtro activo
+        color: Colors.textSecondary, // Color para el texto del filtro activo
     },
     filterText: {
-        color: colors.textPrimary,
+        color: Colors.textPrimary,
         fontWeight: 'bold',
     },
 });

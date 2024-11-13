@@ -2,7 +2,7 @@ import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import BusNumberBadge from '@components/BusNumberBadge';
 import { Ionicons } from '@expo/vector-icons';
-import colors from '@/constants/Colors';
+import { Colors } from '@/constants/Colors';
 import Spacing from '@/constants/Spacing';
 import { useFavorites } from '@/context/FavoriteContext';
 
@@ -77,8 +77,8 @@ const RenderGroupedLine: React.FC<RenderGroupedLineProps> = ({
                                         size={24}
                                         color={
                                             isFavorite
-                                                ? colors.primary
-                                                : colors.textPrimary
+                                                ? Colors.primary
+                                                : Colors.textPrimary
                                         }
                                     />
                                 </TouchableOpacity>
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
         marginHorizontal: Spacing.margin.base,
         marginVertical: 3,
         borderBottomWidth: 1,
-        borderBottomColor: colors.border,
+        borderBottomColor: Colors.border,
     },
     lineHeader: {
         flexDirection: 'row',
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     },
     lineTitle: {
         fontSize: 14,
-        color: colors.textPrimary,
+        color: Colors.textPrimary,
         marginLeft: 8,
         flex: 1,
     },
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     },
     routeDesc: {
         fontSize: 14,
-        color: colors.textSecondary,
+        color: Colors.textSecondary,
         marginLeft: 8,
         flex: 1,
     },

@@ -87,6 +87,29 @@ const fetchAgencies = async (): Promise<Agency[]> => {
     }));
 };
 
+// Función para obtener la posición en tiempo real de un vehículo
+export const fetchRealTimePosition = async (
+    routeId: string,
+): Promise<Agency[]> => {
+    const response = await fetch(
+        `${BASE_URL}/api/bus-route/${routeId}/position`,
+    );
+    if (!response.ok) throw new Error(`Error: ${response.statusText}`);
+    const data = await response.json();
+    return data;
+};
+
+// Función para obtener las rutas de un parada
+const fetchRoutesForStop = async (stopId: string): Promise<Agency[]> => {
+    const response = await fetch(`${BASE_URL}/api/bus-stops/${stopId}/buses`);
+    if (!response.ok) throw new Error(`Error: ${response.statusText}`);
+    const data = await response.json();
+    // console.log('data', data);
+    if (!Array.isArray(data) || data.length === 0)
+        throw new Error('Invalid or empty API response.');
+    return data;
+};
+
 const useAPI = () => {
     const [userId, setUserId] = useState<string | null>(null);
 
@@ -122,7 +145,22 @@ const useAPI = () => {
         return updateFavorite(lineNumber, isFavorite, userId);
     };
 
-    return { useFetchAgencies, useFetchFavorites, toggleFavoriteStatus };
+    // Hook para obtener favoritos
+    const useFetchRoutesForStop = (
+        stopId: string,
+    ): UseQueryResult<string[], Error> =>
+        useQuery({
+            queryKey: ['routeIdForStop', stopId],
+            queryFn: () => fetchRoutesForStop(stopId as string),
+            enabled: !!stopId, // Solo ejecuta la consulta si userId está disponible
+        });
+
+    return {
+        useFetchAgencies,
+        useFetchFavorites,
+        toggleFavoriteStatus,
+        useFetchRoutesForStop,
+    };
 };
 
 export default useAPI;

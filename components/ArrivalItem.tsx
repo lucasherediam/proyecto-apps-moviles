@@ -1,21 +1,30 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import Colors from '@/constants/Colors';
+import { Colors } from '@/constants/Colors';
 
 type ArrivalItemProps = {
     destination: string;
     remainingTime: string;
 };
 
-const ArrivalItem: React.FC<ArrivalItemProps> = ({ destination, remainingTime }) => {
+const ArrivalItem: React.FC<ArrivalItemProps> = ({
+    destination,
+    remainingTime,
+}) => {
     return (
         <TouchableOpacity>
             <View style={styles.itemContainer}>
                 <Text style={styles.routeDesc}>{destination}</Text>
                 <View style={styles.timeInfoContainer}>
-                    <FontAwesome name="clock-o" size={16} color={Colors.textSecondary} />
-                    <Text style={styles.timeText}>Salida en: {remainingTime}</Text>
+                    <FontAwesome
+                        name="clock-o"
+                        size={16}
+                        color={Colors.textSecondary}
+                    />
+                    <Text style={styles.timeText}>
+                        Salida en: {remainingTime}
+                    </Text>
                 </View>
             </View>
         </TouchableOpacity>

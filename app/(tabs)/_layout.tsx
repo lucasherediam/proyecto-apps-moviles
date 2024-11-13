@@ -1,32 +1,24 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-const TabsLayout = () => {
+import { TabBar } from '@components/navigation/TabBar';
+
+export default function TabsLayout() {
     return (
-        <Tabs screenOptions={{ headerShown: false }}>
+        <Tabs tabBar={(props) => <TabBar {...props} />}>
             <Tabs.Screen
                 name="index"
                 options={{
-                    tabBarLabel: 'Home',
-                    tabBarIcon: () => (
-                        <MaterialCommunityIcons name="home" size={24} />
-                    ),
+                    title: 'Inicio',
+                    headerShown: false,
                 }}
             />
             <Tabs.Screen
                 name="lines"
                 options={{
-                    tabBarLabel: 'Lines',
-                    tabBarIcon: () => (
-                        <MaterialCommunityIcons
-                            name="map-marker-distance"
-                            size={24}
-                        />
-                    ),
+                    title: 'Lineas',
+                    headerShown: false,
                 }}
             />
         </Tabs>
     );
-};
-
-export default TabsLayout;
+}

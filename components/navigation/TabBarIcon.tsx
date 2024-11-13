@@ -1,14 +1,31 @@
-// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as React from 'react';
 
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { type IconProps } from '@expo/vector-icons/build/createIconSet';
-import { type ComponentProps } from 'react';
+const iconSize = 26;
 
-export function TabBarIcon({
-    style,
-    ...rest
-}: IconProps<ComponentProps<typeof Ionicons>['name']>) {
-    return (
-        <Ionicons size={28} style={[{ marginBottom: -3 }, style]} {...rest} />
-    );
+export interface IconProps {
+    color?: string;
 }
+
+export const HomeIcon: React.FC<IconProps> = (props) => (
+    <MaterialCommunityIcons
+        name="home"
+        size={iconSize}
+        color="white"
+        {...props}
+    />
+);
+
+export const LineIcon: React.FC<IconProps> = (props) => (
+    <MaterialCommunityIcons
+        name="map-marker-distance"
+        size={iconSize}
+        color="white"
+        {...props}
+    />
+);
+
+export const TabNavigatorsIcons: Record<string, React.FC<IconProps>> = {
+    index: (props) => <HomeIcon {...props} />,
+    lines: (props) => <LineIcon {...props} />,
+};
