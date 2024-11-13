@@ -30,89 +30,64 @@ export default function StopDetails() {
     }, [name, navigation]);
 
     useEffect(() => {
-        if (!stopRoutes) return;
+        if (stopRoutes && stopRoutes.length > 0) {
+            const fetchPositions = async () => {
+                try {
+                    const routeIds = stopRoutes.map((route) => route.route_id);
 
-        const fetchPositions = async () => {
-            try {
-                const routeIds = stopRoutes.map((route) => route.route_id);
+                    const vehicles = (
+                        await Promise.all(
+                            routeIds.map((id) => fetchRealTimePosition(id)),
+                        )
+                    ).flat();
 
-                const vehicles = (
-                    await Promise.all(
-                        routeIds.map((id) => fetchRealTimePosition(id)),
-                    )
-                ).flat();
+                    const vehiclesByRouteId = vehicles.reduce(
+                        (acc, vehicle) => {
+                            if (!acc[vehicle.route_id])
+                                acc[vehicle.route_id] = [];
+                            acc[vehicle.route_id].push({
+                                latitude: vehicle.latitude,
+                                longitude: vehicle.longitude,
+                            });
+                            return acc;
+                        },
+                        {},
+                    );
 
-                const vehiclesByRouteId = vehicles.reduce((acc, vehicle) => {
-                    if (!acc[vehicle.route_id]) acc[vehicle.route_id] = [];
-                    acc[vehicle.route_id].push({
-                        latitude: vehicle.latitude,
-                        longitude: vehicle.longitude,
+                    const availableRoutes = [];
+                    const inactiveRoutes = [];
+
+                    stopRoutes.forEach((route) => {
+                        const routeWithPositions = {
+                            ...route,
+                            positions: vehiclesByRouteId[route.route_id] || [],
+                        };
+                        if (routeWithPositions.positions.length > 0) {
+                            availableRoutes.push(routeWithPositions);
+                        } else {
+                            inactiveRoutes.push(routeWithPositions);
+                        }
                     });
-                    return acc;
-                }, {});
 
-                const availableRoutes = [];
-                const inactiveRoutes = [];
+                    setSections([
+                        { title: 'Disponibles', data: availableRoutes },
+                        {
+                            title: 'Sin vehículos activos',
+                            data: inactiveRoutes,
+                        },
+                    ]);
+                } catch (error) {
+                    console.error('Error fetching vehicle positions:', error);
+                }
+            };
 
-                stopRoutes.forEach((route) => {
-                    const routeWithPositions = {
-                        ...route,
-                        positions: vehiclesByRouteId[route.route_id] || [],
-                    };
-                    if (routeWithPositions.positions.length > 0) {
-                        availableRoutes.push(routeWithPositions);
-                    } else {
-                        inactiveRoutes.push(routeWithPositions);
-                    }
-                });
+            fetchPositions();
 
-                setSections([
-                    { title: 'Disponibles', data: availableRoutes },
-                    { title: 'Sin vehículos activos', data: inactiveRoutes },
-                ]);
-            } catch (error) {
-                console.error('Error fetching vehicle positions:', error);
-            }
-        };
+            const intervalId = setInterval(fetchPositions, 30000);
 
-        fetchPositions();
-
-        const intervalId = setInterval(fetchPositions, 30000);
-
-        return () => clearInterval(intervalId);
+            return () => clearInterval(intervalId);
+        }
     }, [stopRoutes]);
-
-    if (!stopRoutes) {
-        return (
-            <Screen pt={0}>
-                <View style={styles.notFoundContainer}>
-                    <Ionicons
-                        name="alert-circle"
-                        size={50}
-                        color={Colors.warning}
-                    />
-                    <Text style={styles.notFoundText}>
-                        Parada no encontrada
-                    </Text>
-                    <Text style={styles.notFoundSubtext}>
-                        No pudimos encontrar la información para esta parada.
-                        Intenta nuevamente más tarde.
-                    </Text>
-                </View>
-            </Screen>
-        );
-    }
-
-    if (isLoading) {
-        return (
-            <Screen phauto pt={0}>
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={Colors.primary} />
-                    <Text style={styles.loadingText}>Cargando...</Text>
-                </View>
-            </Screen>
-        );
-    }
 
     const handleItemPress = (item) => {
         router.push({
@@ -154,6 +129,38 @@ export default function StopDetails() {
             <Text style={styles.sectionHeader}>{title}</Text>
         </View>
     );
+
+    if (isLoading) {
+        return (
+            <Screen phauto pt={0}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={Colors.primary} />
+                    <Text style={styles.loadingText}>Cargando...</Text>
+                </View>
+            </Screen>
+        );
+    }
+
+    if (!stopRoutes || stopRoutes.length === 0) {
+        return (
+            <Screen pt={0}>
+                <View style={styles.notFoundContainer}>
+                    <Ionicons
+                        name="alert-circle"
+                        size={50}
+                        color={Colors.warning}
+                    />
+                    <Text style={styles.notFoundText}>
+                        Parada no encontrada
+                    </Text>
+                    <Text style={styles.notFoundSubtext}>
+                        No pudimos encontrar la información para esta parada.
+                        Intenta nuevamente más tarde.
+                    </Text>
+                </View>
+            </Screen>
+        );
+    }
 
     return (
         <Screen phauto pt={0}>
