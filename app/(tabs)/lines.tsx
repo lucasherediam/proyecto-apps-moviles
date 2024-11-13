@@ -7,7 +7,6 @@ import {
     ActivityIndicator,
     StyleSheet,
     ListRenderItem,
-    TouchableOpacity,
 } from 'react-native';
 import useAPI from '@/hooks/useApi';
 import FilterSelector from '@components/FilterSelector';
@@ -16,10 +15,6 @@ import Favorites from '@components/screens/FavoritesScreen';
 import AlertsScreen from '@components/screens/AlertsScreen';
 import { Colors } from '@constants/Colors';
 import RenderSubwayLine from '@components/RenderSubwayLine';
-import { Ionicons } from '@expo/vector-icons';
-
-import { useFavorites } from '@/context/FavoriteContext';
-import SubwayLineBadge from '@/components/SubwayLineBadge';
 import { Screen } from '@/components/Screen';
 
 type Line = {
@@ -133,7 +128,7 @@ const Lines: React.FC = () => {
     }
 
     return (
-        <Screen phauto>
+        <Screen>
             <FilterSelector
                 activeFilter={selectedFilter}
                 onFilterChange={handleFilterChange}
