@@ -80,7 +80,7 @@ export default function StopDetails() {
         const intervalId = setInterval(fetchPositions, 30000);
 
         return () => clearInterval(intervalId);
-    }, []);
+    }, [stopRoutes]);
 
     if (!stopRoutes) {
         return (
