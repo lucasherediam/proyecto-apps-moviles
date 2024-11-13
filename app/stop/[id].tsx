@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useLayoutEffect } from 'react';
+import React, { useEffect, useState, useLayoutEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -7,6 +7,7 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Alert,
+    Animated,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
@@ -19,6 +20,9 @@ import { Ionicons } from '@expo/vector-icons';
 export default function StopDetails() {
     const { id, name, userLatitude, userLongitude } = useLocalSearchParams();
     const [sections, setSections] = useState([]);
+    const [isReloading, setIsReloading] = useState(false);
+    const [lastUpdated, setLastUpdated] = useState('');
+    const reloadAnim = useRef(new Animated.Value(0)).current;
     const router = useRouter();
     const navigation = useNavigation();
     const { useFetchRoutesForStop } = useAPI();
@@ -30,77 +34,90 @@ export default function StopDetails() {
         });
     }, [name, navigation]);
 
-    useEffect(() => {
+    const startReloadAnimation = () => {
+        reloadAnim.setValue(0);
+        Animated.timing(reloadAnim, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+        }).start(() => {
+            if (isReloading) {
+                startReloadAnimation(); // Repeat if still reloading
+            }
+        });
+    };
+
+    const fetchPositions = async () => {
+        setIsReloading(true);
+        startReloadAnimation();
         if (stopRoutes && stopRoutes.length > 0) {
-            const fetchPositions = async () => {
-                try {
-                    const routeIds = stopRoutes.map((route) => route.route_id);
+            try {
+                const routeIds = stopRoutes.map((route) => route.route_id);
 
-                    const vehicles = (
-                        await Promise.all(
-                            routeIds.map((id) => fetchRealTimePosition(id)),
-                        )
-                    ).flat();
+                const vehicles = (
+                    await Promise.all(
+                        routeIds.map((id) => fetchRealTimePosition(id)),
+                    )
+                ).flat();
 
-                    const vehiclesByRouteId = vehicles.reduce(
-                        (acc, vehicle) => {
-                            if (!acc[vehicle.route_id])
-                                acc[vehicle.route_id] = [];
-                            acc[vehicle.route_id].push({
-                                latitude: vehicle.latitude,
-                                longitude: vehicle.longitude,
-                            });
-                            return acc;
-                        },
-                        {},
-                    );
-
-                    const availableRoutes = [];
-                    const inactiveRoutes = [];
-
-                    stopRoutes.forEach((route) => {
-                        const routeWithPositions = {
-                            ...route,
-                            positions: vehiclesByRouteId[route.route_id] || [],
-                        };
-                        if (routeWithPositions.positions.length > 0) {
-                            availableRoutes.push(routeWithPositions);
-                        } else {
-                            inactiveRoutes.push(routeWithPositions);
-                        }
+                const vehiclesByRouteId = vehicles.reduce((acc, vehicle) => {
+                    if (!acc[vehicle.route_id]) acc[vehicle.route_id] = [];
+                    acc[vehicle.route_id].push({
+                        latitude: vehicle.latitude,
+                        longitude: vehicle.longitude,
                     });
+                    return acc;
+                }, {});
 
-                    setSections([
-                        { title: 'Disponibles', data: availableRoutes },
-                        {
-                            title: 'Sin vehículos activos',
-                            data: inactiveRoutes,
-                        },
-                    ]);
-                } catch (error) {
-                    console.error('Error fetching vehicle positions:', error);
-                }
-            };
+                const availableRoutes = [];
+                const inactiveRoutes = [];
 
-            fetchPositions();
+                stopRoutes.forEach((route) => {
+                    const routeWithPositions = {
+                        ...route,
+                        positions: vehiclesByRouteId[route.route_id] || [],
+                    };
+                    if (routeWithPositions.positions.length > 0) {
+                        availableRoutes.push(routeWithPositions);
+                    } else {
+                        inactiveRoutes.push(routeWithPositions);
+                    }
+                });
 
-            const intervalId = setInterval(fetchPositions, 30000);
+                setSections([
+                    { title: 'Disponibles', data: availableRoutes },
+                    {
+                        title: 'Sin vehículos activos',
+                        data: inactiveRoutes,
+                    },
+                ]);
 
-            return () => clearInterval(intervalId);
+                // Establecer la última fecha de actualización
+                const now = new Date();
+                const formattedDate = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+                setLastUpdated(formattedDate);
+            } catch (error) {
+                console.error('Error fetching vehicle positions:', error);
+            }
         }
+        setIsReloading(false); // Stop reloading state
+    };
+
+    useEffect(() => {
+        fetchPositions();
+        const intervalId = setInterval(fetchPositions, 30000);
+
+        return () => clearInterval(intervalId);
     }, [stopRoutes]);
 
     const handleItemPress = (item) => {
-        // Verifica si el número de colectivos activos es cero
         if (item.positions.length === 0) {
-            // Muestra una alerta si no hay colectivos activos
             Alert.alert(
                 'Sin colectivos activos',
                 'No hay colectivos activos en este ramal en este momento.',
                 [{ text: 'OK' }],
             );
         } else {
-            // Si hay colectivos, navega a la pantalla de detalles de la ruta
             router.push({
                 pathname: '/route/route-details',
                 params: {
@@ -177,7 +194,39 @@ export default function StopDetails() {
     return (
         <Screen phauto pt={0}>
             <View style={styles.headerContainer}>
-                <Text style={styles.headerTitle}>Próximas llegadas</Text>
+                <View style={styles.headerTitleContainer}>
+                    <Text style={styles.headerTitle}>Próximas llegadas</Text>
+                    <Text style={styles.lastUpdatedText}>
+                        Última actualización: {lastUpdated}
+                    </Text>
+                </View>
+                <TouchableOpacity
+                    onPress={fetchPositions}
+                    style={styles.reloadButton}
+                >
+                    <Animated.View
+                        style={{
+                            transform: [
+                                {
+                                    rotate: reloadAnim.interpolate({
+                                        inputRange: [0, 1],
+                                        outputRange: ['0deg', '360deg'],
+                                    }),
+                                },
+                            ],
+                        }}
+                    >
+                        <Ionicons
+                            name="reload"
+                            size={24}
+                            color={
+                                isReloading
+                                    ? Colors.textSecondary
+                                    : Colors.textPrimary
+                            }
+                        />
+                    </Animated.View>
+                </TouchableOpacity>
             </View>
             <SectionList
                 sections={sections}
@@ -193,16 +242,28 @@ export default function StopDetails() {
 
 const styles = StyleSheet.create({
     headerContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         padding: 16,
         backgroundColor: Colors.primary,
         marginBottom: 20,
         borderRadius: 20,
-        alignItems: 'center',
+    },
+    headerTitleContainer: {
+        flexDirection: 'column',
     },
     headerTitle: {
         fontSize: 20,
         color: Colors.textPrimary,
-        marginBottom: 4,
+    },
+    lastUpdatedText: {
+        fontSize: 12,
+        color: Colors.textSecondary,
+        marginTop: 4,
+    },
+    reloadButton: {
+        padding: 8,
     },
     sectionHeaderContainer: {
         paddingTop: 10,
