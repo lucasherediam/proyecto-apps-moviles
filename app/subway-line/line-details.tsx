@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { View, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import MapView, { Marker, Polyline } from 'react-native-maps';
-import axios from 'axios';
+import { darkMapStyle } from '@/constants/Colors';
 
 type Coordinate = {
     latitude: number;
@@ -138,21 +138,20 @@ export default function LineDetails() {
                 initialRegion={{
                     latitude: midPoint.latitude,
                     longitude: midPoint.longitude,
-                    latitudeDelta: 0.1,
-                    longitudeDelta: 0.1,
+                    latitudeDelta: 0.05,
+                    longitudeDelta: 0.05,
                 }}
+                showsPointsOfInterest={false}
+                customMapStyle={darkMapStyle}
             >
-                {/* Mostrar la shape completa */}
                 <Polyline
                     coordinates={routeShape}
                     strokeColor={color}
-                    strokeWidth={8}
+                    strokeWidth={4}
                 />
-
-                {/* Mostrar solo los puntos de las paradas */}
                 {stops.map((stop, index) => (
                     <Marker key={index} coordinate={stop}>
-                        <View style={styles.marker}>
+                        <View style={[styles.stationMarker]}>
                             <View style={styles.markerContent} />
                         </View>
                     </Marker>
@@ -185,4 +184,14 @@ const styles = StyleSheet.create({
         backgroundColor: '#f2a71b',
         borderRadius: 5,
     },
+    stationMarker: {
+        backgroundColor: 'white',
+        borderRadius: 10,
+        padding: 5,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#f2a71b',
+    },
+    
 });
