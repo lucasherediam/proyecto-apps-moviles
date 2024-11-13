@@ -145,7 +145,7 @@ export default function StationDetails() {
     };
 
     return (
-        <Screen stack>
+        <Screen phauto pt={0}>
             {station && (
                 <StationHeader
                     name={station.station_name}
@@ -153,7 +153,7 @@ export default function StationDetails() {
                     onPress={() => handleItemPress(station)}
                 />
             )}
-            {arrivals.length == 0 ? noArrivalsFound() : arrivalsFound()}
+            {arrivals.length === 0 ? noArrivalsFound() : arrivalsFound()}
         </Screen>
     );
 }

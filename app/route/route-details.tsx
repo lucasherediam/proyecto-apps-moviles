@@ -1,10 +1,21 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import {
+    View,
+    StyleSheet,
+    ActivityIndicator,
+    Alert,
+    Animated,
+    TouchableOpacity,
+    Text,
+} from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import MapView, { Marker, Polyline } from 'react-native-maps';
+import LottieView from 'lottie-react-native';
 import axios from 'axios';
-
+import { Ionicons } from '@expo/vector-icons';
+import { darkMapStyle } from '@/constants/Colors';
+import { fetchRealTimePosition } from '@/hooks/useApi';
+const busAnimation = require('@assets/busAnimation.json');
 type Coordinate = {
     latitude: number;
     longitude: number;
@@ -18,48 +29,45 @@ export default function RouteDetails() {
             userLatitude?: string;
             userLongitude?: string;
         }>();
+
     const [routeShape, setRouteShape] = useState<Coordinate[]>([]);
     const [stops, setStops] = useState<Coordinate[]>([]);
+    const [vehiclePositions, setVehiclePositions] = useState(
+        JSON.parse(vehiclesPosition),
+    );
     const [midPoint, setMidPoint] = useState<Coordinate | null>(null);
     const mapRef = useRef<MapView | null>(null);
+
+    // Animation setup for bus marker blinking
+    const scaleAnim = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
         if (routeId) {
             fetchRouteShapeAndStops(routeId);
+            const interval = setInterval(updateVehiclePositions, 30000);
+            return () => clearInterval(interval); // Clear interval on unmount
         }
     }, [routeId]);
 
+    useEffect(() => {
+        startBlinkingAnimation();
+    }, []);
+
     const fetchRouteShapeAndStops = async (routeId: string) => {
         try {
-            console.log(`Fetching route shape for route ${routeId}`);
             const shapeResponse = await axios.get(
                 `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/bus-route/${routeId}/shape`,
             );
-
             const stopsResponse = await axios.get(
                 `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/bus-route/${routeId}/stops`,
             );
 
-            if (
-                shapeResponse.data.length === 0 ||
-                stopsResponse.data.length === 0
-            ) {
-                Alert.alert(
-                    'Error',
-                    'No se encontró la trayectoria o las paradas para esta línea.',
-                );
-                return;
-            }
-
-            // Procesar las coordenadas de la shape
             const shapeCoords: Coordinate[] = shapeResponse.data[0].points.map(
                 (point: any) => ({
                     latitude: point.shape_pt_lat,
                     longitude: point.shape_pt_lon,
                 }),
             );
-
-            // Procesar las coordenadas de las paradas
             const stopCoords: Coordinate[] = stopsResponse.data.map(
                 (stop: any) => ({
                     latitude: stop.latitude,
@@ -67,17 +75,9 @@ export default function RouteDetails() {
                 }),
             );
 
-            if (shapeCoords.length === 0 || stopCoords.length === 0) {
-                Alert.alert(
-                    'Error',
-                    'No se encontraron puntos válidos para esta ruta.',
-                );
-                return;
-            }
-
             setRouteShape(shapeCoords);
             setStops(stopCoords);
-            // Calcular el punto medio para centrar el mapa
+
             const midLatitude =
                 (shapeCoords[0].latitude +
                     shapeCoords[shapeCoords.length - 1].latitude) /
@@ -97,33 +97,42 @@ export default function RouteDetails() {
         }
     };
 
-    useEffect(() => {
-        if (
-            mapRef.current &&
-            routeShape.length > 0 &&
-            userLatitude &&
-            userLongitude
-        ) {
-            const coordinates: Coordinate[] = [
-                ...routeShape,
-                {
-                    latitude: parseFloat(userLatitude),
-                    longitude: parseFloat(userLongitude),
-                },
-            ];
-
-            mapRef.current.fitToCoordinates(coordinates, {
-                edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
-                animated: true,
-            });
+    const updateVehiclePositions = async () => {
+        try {
+            console.log(routeId);
+            const response = await fetchRealTimePosition(routeId);
+            setVehiclePositions(response);
+        } catch (error) {
+            Alert.alert(
+                'Error',
+                'No se pudo actualizar la posición de los vehículos.',
+            );
+            console.error(error);
         }
-    }, [routeShape, userLatitude, userLongitude]);
+    };
+
+    const startBlinkingAnimation = () => {
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(scaleAnim, {
+                    toValue: 1.2,
+                    duration: 500,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(scaleAnim, {
+                    toValue: 1,
+                    duration: 500,
+                    useNativeDriver: true,
+                }),
+            ]),
+        ).start();
+    };
 
     if (
         !midPoint ||
         !routeShape.length ||
         !stops.length ||
-        !vehiclesPosition.length
+        !vehiclePositions.length
     ) {
         return (
             <View style={styles.loadingContainer}>
@@ -131,6 +140,7 @@ export default function RouteDetails() {
             </View>
         );
     }
+
     return (
         <View style={styles.container}>
             <MapView
@@ -141,38 +151,56 @@ export default function RouteDetails() {
                 initialRegion={{
                     latitude: midPoint.latitude,
                     longitude: midPoint.longitude,
-                    latitudeDelta: 0.1,
-                    longitudeDelta: 0.1,
+                    latitudeDelta: 0.05,
+                    longitudeDelta: 0.05,
                 }}
+                showsPointsOfInterest={false}
+                customMapStyle={darkMapStyle}
             >
-                {/* Mostrar la shape completa */}
                 <Polyline
                     coordinates={routeShape}
                     strokeColor="blue"
-                    strokeWidth={8}
+                    strokeWidth={4}
                 />
 
-                {/* Mostrar solo los puntos de las paradas */}
                 {stops.map((stop, index) => (
                     <Marker key={index} coordinate={stop}>
-                        <View style={styles.marker}>
-                            <View style={styles.markerContent} />
+                        <View style={styles.stopMarker}>
+                            <View style={styles.innerStopMarker} />
                         </View>
                     </Marker>
                 ))}
-                {/* Mostrar la posición de los vehículos */}
-                {JSON.parse(vehiclesPosition).map(
-                    (vehicle: any, index: number) => (
-                        <Marker
-                            key={index}
-                            coordinate={{
-                                latitude: vehicle.latitude,
-                                longitude: vehicle.longitude,
-                            }}
-                        ></Marker>
-                    ),
-                )}
+
+                {vehiclePositions.map((vehicle: any, index: number) => (
+                    <Marker
+                        key={index}
+                        coordinate={{
+                            latitude: vehicle.latitude,
+                            longitude: vehicle.longitude,
+                        }}
+                        anchor={{ x: 0.5, y: 0.5 }}
+                    >
+                        <Animated.View
+                            style={{ transform: [{ scale: scaleAnim }] }}
+                        >
+                            <LottieView
+                                source={busAnimation}
+                                autoPlay
+                                loop
+                                style={styles.lottieBus}
+                            />
+                        </Animated.View>
+                    </Marker>
+                ))}
             </MapView>
+
+            <TouchableOpacity
+                style={styles.reloadButton}
+                onPress={updateVehiclePositions}
+            >
+                <Ionicons name="refresh" size={24} color="white" />
+                <Text style={styles.reloadButtonText}>Recargar</Text>
+            </TouchableOpacity>
         </View>
     );
 }
@@ -185,19 +213,44 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: '#f0f0f0',
     },
     map: {
         flex: 1,
     },
-    marker: {
-        backgroundColor: 'lightgray',
-        padding: 2,
-        borderRadius: 5,
+    stopMarker: {
+        backgroundColor: 'white',
+        borderRadius: 10,
+        padding: 5,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#007AFF',
     },
-    markerContent: {
-        width: 7,
-        height: 7,
-        backgroundColor: 'blue',
-        borderRadius: 5,
+    innerStopMarker: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: '#007AFF',
+    },
+    lottieBus: {
+        width: 60,
+        height: 60,
+    },
+    reloadButton: {
+        position: 'absolute',
+        bottom: 20,
+        right: 20,
+        backgroundColor: '#007AFF',
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+        borderRadius: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    reloadButtonText: {
+        color: 'white',
+        fontSize: 16,
+        marginLeft: 5,
     },
 });

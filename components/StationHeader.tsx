@@ -21,8 +21,7 @@ const StationHeader: React.FC<StationHeaderProps> = ({
                     { backgroundColor: color || Colors.primary },
                 ]}
             >
-                <Text style={styles.headerTitle}>{name}</Text>
-                <Text style={styles.subHeader}>Próximas llegadas</Text>
+                <Text style={styles.headerTitle}>Próximas llegadas</Text>
             </View>
         </Pressable>
     );
@@ -37,8 +36,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     headerTitle: {
-        fontSize: 28,
-        fontWeight: 'bold',
+        fontSize: 20,
         color: Colors.textPrimary,
         marginBottom: 4,
     },

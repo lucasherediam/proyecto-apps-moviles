@@ -8,9 +8,8 @@ import { router } from 'expo-router';
 import useCurrentLocation from '@hooks/useCurrentLocation';
 import useNearbyTransit from '@hooks/useNearbyTransit';
 import { debounce } from 'lodash';
-import { darkMapStyle } from '@/constants/Colors';
+import { Colors, darkMapStyle } from '@/constants/Colors';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors } from '@/constants/Colors';
 const MemoizedBusStopIcon = React.memo(BusStopIcon);
 const MemoizedSubwayStationIcon = React.memo(SubwayStationIcon);
 

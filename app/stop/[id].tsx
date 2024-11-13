@@ -1,11 +1,11 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState, useLayoutEffect } from 'react';
 import {
     View,
     Text,
     StyleSheet,
-    FlatList,
+    SectionList,
     TouchableOpacity,
+    ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
@@ -13,37 +13,35 @@ import { Screen } from '@/components/Screen';
 import { Colors } from '@/constants/Colors';
 import BusNumberBadge from '@components/BusNumberBadge';
 import useAPI, { fetchRealTimePosition } from '@/hooks/useApi';
-
-type BusRouteItem = {
-    route_id: string;
-    route_short_name: string;
-    agency_color: string;
-    trip_headsigns: string;
-};
+import { Ionicons } from '@expo/vector-icons';
 
 export default function StopDetails() {
     const { id, name, userLatitude, userLongitude } = useLocalSearchParams();
-    const [vehiclesAvailable, setVehicleAvailability] = useState([]);
+    const [sections, setSections] = useState([]);
     const router = useRouter();
     const navigation = useNavigation();
     const { useFetchRoutesForStop } = useAPI();
     const { data: stopRoutes, isLoading } = useFetchRoutesForStop(id as string);
 
     useLayoutEffect(() => {
+        navigation.setOptions({
+            title: name,
+        });
+    }, [name, navigation]);
+
+    useEffect(() => {
         if (!stopRoutes) return;
 
         const fetchPositions = async () => {
             try {
                 const routeIds = stopRoutes.map((route) => route.route_id);
 
-                // Fetch vehicle positions for all route IDs in parallel
                 const vehicles = (
                     await Promise.all(
                         routeIds.map((id) => fetchRealTimePosition(id)),
                     )
                 ).flat();
 
-                // Group vehicles by route_id for easy access
                 const vehiclesByRouteId = vehicles.reduce((acc, vehicle) => {
                     if (!acc[vehicle.route_id]) acc[vehicle.route_id] = [];
                     acc[vehicle.route_id].push({
@@ -53,19 +51,25 @@ export default function StopDetails() {
                     return acc;
                 }, {});
 
-                // Extract route IDs with available vehicles
-                const activeRouteIds = new Set(
-                    vehicles.map((vehicle) => vehicle.route_id),
-                );
+                const availableRoutes = [];
+                const inactiveRoutes = [];
 
-                // Filter stopRoutes and add vehicle positions if available
-                const availableRoutes = stopRoutes
-                    .filter((route) => activeRouteIds.has(route.route_id))
-                    .map((route) => ({
+                stopRoutes.forEach((route) => {
+                    const routeWithPositions = {
                         ...route,
                         positions: vehiclesByRouteId[route.route_id] || [],
-                    }));
-                setVehicleAvailability(availableRoutes);
+                    };
+                    if (routeWithPositions.positions.length > 0) {
+                        availableRoutes.push(routeWithPositions);
+                    } else {
+                        inactiveRoutes.push(routeWithPositions);
+                    }
+                });
+
+                setSections([
+                    { title: 'Disponibles', data: availableRoutes },
+                    { title: 'Sin vehículos activos', data: inactiveRoutes },
+                ]);
             } catch (error) {
                 console.error('Error fetching vehicle positions:', error);
             }
@@ -73,20 +77,44 @@ export default function StopDetails() {
 
         fetchPositions();
 
-        navigation.setOptions({
-            title: name,
-        });
-    }, [stopRoutes, name, navigation]);
+        const intervalId = setInterval(fetchPositions, 30000);
 
-    if (!stopRoutes && isLoading) {
+        return () => clearInterval(intervalId);
+    }, []);
+
+    if (!stopRoutes) {
         return (
-            <Screen>
-                <Text style={styles.errorText}>Parada no encontrada</Text>
+            <Screen pt={0}>
+                <View style={styles.notFoundContainer}>
+                    <Ionicons
+                        name="alert-circle"
+                        size={50}
+                        color={Colors.warning}
+                    />
+                    <Text style={styles.notFoundText}>
+                        Parada no encontrada
+                    </Text>
+                    <Text style={styles.notFoundSubtext}>
+                        No pudimos encontrar la información para esta parada.
+                        Intenta nuevamente más tarde.
+                    </Text>
+                </View>
             </Screen>
         );
     }
 
-    const handleItemPress = async (item: BusRouteItem) => {
+    if (isLoading) {
+        return (
+            <Screen phauto pt={0}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={Colors.primary} />
+                    <Text style={styles.loadingText}>Cargando...</Text>
+                </View>
+            </Screen>
+        );
+    }
+
+    const handleItemPress = (item) => {
         router.push({
             pathname: '/route/route-details',
             params: {
@@ -97,34 +125,46 @@ export default function StopDetails() {
             },
         });
     };
+
+    const renderRouteItem = ({ item }) => (
+        <TouchableOpacity onPress={() => handleItemPress(item)}>
+            <View style={styles.itemContainer}>
+                <BusNumberBadge
+                    routeNumber={item.route_short_name}
+                    agencyColor={item.agency_color}
+                    details={true}
+                />
+                <Text style={styles.routeDesc}>{item.trip_headsigns}</Text>
+                <View style={styles.vehicleCountContainer}>
+                    <Ionicons
+                        name="bus"
+                        size={20}
+                        color={item.positions.length > 0 ? 'lightgreen' : 'red'}
+                    />
+                    <Text style={styles.vehicleCountText}>
+                        {item.positions.length}
+                    </Text>
+                </View>
+            </View>
+        </TouchableOpacity>
+    );
+
+    const renderSectionHeader = ({ section: { title } }) => (
+        <View style={styles.sectionHeaderContainer}>
+            <Text style={styles.sectionHeader}>{title}</Text>
+        </View>
+    );
+
     return (
         <Screen phauto pt={0}>
             <View style={styles.headerContainer}>
-                <Text style={styles.headerTitle}>{name}</Text>
-                <Text style={styles.subHeader}>Próximas llegadas</Text>
+                <Text style={styles.headerTitle}>Próximas llegadas</Text>
             </View>
-            <FlatList
-                data={vehiclesAvailable}
+            <SectionList
+                sections={sections}
                 keyExtractor={(item, index) => `${item.route_id}-${index}`}
-                renderItem={({ item }) => (
-                    <TouchableOpacity onPress={() => handleItemPress(item)}>
-                        <View style={styles.itemContainer}>
-                            <BusNumberBadge
-                                routeNumber={item.route_short_name}
-                                agencyColor={item.agency_color}
-                                details={true}
-                            />
-                            <Text style={styles.routeDesc}>
-                                {item.trip_headsigns}
-                            </Text>
-                            <View style={styles.timeContainer}>
-                                <Text style={styles.timeText}>
-                                    {item.scheduled_time}
-                                </Text>
-                            </View>
-                        </View>
-                    </TouchableOpacity>
-                )}
+                renderItem={renderRouteItem}
+                renderSectionHeader={renderSectionHeader}
                 ItemSeparatorComponent={() => <View style={styles.separator} />}
                 ListFooterComponent={() => <View style={styles.separator} />}
             />
@@ -137,18 +177,22 @@ const styles = StyleSheet.create({
         padding: 16,
         backgroundColor: Colors.primary,
         marginBottom: 20,
+        borderRadius: 20,
         alignItems: 'center',
     },
     headerTitle: {
-        fontSize: 28,
-        fontWeight: 'bold',
+        fontSize: 20,
         color: Colors.textPrimary,
         marginBottom: 4,
     },
-    subHeader: {
+    sectionHeaderContainer: {
+        paddingTop: 10,
+        backgroundColor: Colors.background,
+    },
+    sectionHeader: {
         fontSize: 18,
+        fontWeight: 'bold',
         color: Colors.textSecondary,
-        marginBottom: 16,
     },
     itemContainer: {
         paddingVertical: 10,
@@ -162,11 +206,12 @@ const styles = StyleSheet.create({
         marginLeft: 10,
         flex: 1,
     },
-    timeContainer: {
+    vehicleCountContainer: {
         flexDirection: 'row',
         alignItems: 'center',
+        marginLeft: 10,
     },
-    timeText: {
+    vehicleCountText: {
         fontSize: 16,
         color: Colors.textPrimary,
         marginLeft: 4,
@@ -176,8 +221,38 @@ const styles = StyleSheet.create({
         width: '100%',
         backgroundColor: Colors.border,
     },
-    errorText: {
-        fontSize: 20,
-        color: 'red',
+    notFoundContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+        backgroundColor: Colors.background,
+    },
+    notFoundText: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: Colors.warning,
+        marginTop: 10,
+        textAlign: 'center',
+    },
+    notFoundSubtext: {
+        fontSize: 16,
+        color: Colors.textSecondary,
+        marginTop: 5,
+        textAlign: 'center',
+        paddingHorizontal: 20,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+        backgroundColor: Colors.background,
+    },
+    loadingText: {
+        fontSize: 18,
+        color: Colors.textPrimary,
+        marginTop: 10,
+        textAlign: 'center',
     },
 });

@@ -13,7 +13,7 @@ const Colors = {
     iconInactive: '#808080', // Ajustado
     iconWithActiveBackground: '#ffffff',
     success: '#4caf50',
-    warning: '#ffeb3b',
+    warning: '#FFA726',
     error: '#f44336',
     info: '#2196f3',
     cardBackground: '#2a2a2a', // Ajustado
