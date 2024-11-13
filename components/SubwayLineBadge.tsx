@@ -15,21 +15,17 @@ const SubwayLineBadge = ({
 }: SubwayLineBadgeProps) => {
     // Define formattedRouteNumber con el valor adecuado según expanded
     const routeShortNames: { [key: string]: string } = {
-        'LineaA': 'Linea A',
-        'LineaB': 'Linea B',
-        'LineaC': 'Linea C',
-        'LineaD': 'Linea D',
-        'LineaE': 'Linea E',
-        'LineaH': 'Linea H',
-        'PM-Civico': 'PM Centro Civico', 
-        "PM-Savio": 'PM General Savio',
+        'LINEA A': 'Linea A',
+        'LINEA B': 'Linea B',
+        'LINEA C': 'Linea C',
+        'LINEA D': 'Linea D',
+        'LINEA E': 'Linea E',
+        'LINEA H': 'Linea H',
+        'PM CENTRO CIVICO': 'PM Centro Civico',
+        'PM GENERAL SAVIO': 'PM General Savio',
     };
 
-    let formattedRouteNumber = details
-        ? line
-        : line.match(/^\d+/)?.[0] || line;
-
-    
+    let formattedRouteNumber = details ? line : line.match(/^\d+/)?.[0] || line;
 
     return (
         <View style={styles.badgeContainer}>
@@ -41,7 +37,8 @@ const SubwayLineBadge = ({
                     style={styles.icon}
                 />
                 <Text style={styles.routeNumberText}>
-                    {routeShortNames[line as keyof typeof routeShortNames] || line}
+                    {routeShortNames[line as keyof typeof routeShortNames] ||
+                        line}
                 </Text>
             </View>
             {/* Aplica el color solo a la barra inferior */}
