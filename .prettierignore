@@ -1,0 +1,5 @@
+node_modules
+.expo
+.next
+build
+.DS_Store

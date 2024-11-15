@@ -1,0 +1,19 @@
+{
+  "presets": ["babel-preset-expo"],
+  "plugins": [
+    [
+      "module-resolver",
+      {
+        "root": ["./"],
+        "alias": {
+          "@constants": "./constants",
+          "@components": "./components",
+          "@assets": "./assets",
+          "@context": "./context",
+          "@data": "./data",
+          "@hooks": "./hooks"
+        }
+      }
+    ]
+  ]
+}
