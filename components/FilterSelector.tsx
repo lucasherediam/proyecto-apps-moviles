@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons'; // Cambia el paquete si usas otro set de íconos
 import { Colors } from '@/constants/Colors';
 
 type Filter = 'all' | 'bus' | 'subte' | 'favorites' | 'alerts';
@@ -11,43 +12,37 @@ type FilterSelectorProps = {
 
 const FilterSelector = React.memo(
     ({ activeFilter, onFilterChange }: FilterSelectorProps) => {
-        const filtersHeader = [
-            'Alertas',
-            'Favoritos',
-            'Todo',
-            'Colectivos',
-            'Subtes',
+        const filters = [
+            { id: 'alerts', icon: 'bell-outline' },
+            { id: 'favorites', icon: 'heart-outline' },
+            { id: 'all', icon: 'view-dashboard-outline' },
+            { id: 'bus', icon: 'bus' },
+            { id: 'subte', icon: 'subway-variant' },
         ];
-        const filters = ['alerts', 'favorites', 'all', 'bus', 'subte'];
 
         return (
             <View style={styles.selectorContainer}>
-                {filters.map((filter, index) => (
+                {filters.map((filter) => (
                     <TouchableOpacity
-                        key={filter}
+                        key={filter.id}
                         style={[
                             styles.filterButton,
-                            activeFilter === filter &&
-                                styles.filterButtonActive,
+                            activeFilter === filter.id && styles.filterButtonActive,
                         ]}
-                        onPress={() => onFilterChange(filter as Filter)}
+                        onPress={() => onFilterChange(filter.id as Filter)}
                     >
-                        <Text
-                            style={[
-                                styles.filterText,
-                                activeFilter === filter &&
-                                    styles.filterTextActive,
-                            ]}
-                        >
-                            {filtersHeader[index]}
-                        </Text>
+                        <Icon
+                            name={filter.icon}
+                            size={24}
+                            color={Colors.textPrimary}
+                        />
                     </TouchableOpacity>
                 ))}
             </View>
         );
     },
 );
-// Añadir displayName al componente para evitar la advertencia de ESLint
+
 FilterSelector.displayName = 'FilterSelector';
 
 const styles = StyleSheet.create({
@@ -57,20 +52,13 @@ const styles = StyleSheet.create({
         padding: 10,
     },
     filterButton: {
-        paddingVertical: 8,
-        paddingHorizontal: 12,
+        alignItems: 'center',
+        padding: 8,
         borderRadius: 20,
         backgroundColor: Colors.background,
     },
     filterButtonActive: {
         backgroundColor: Colors.primary, // Color para el filtro activo
-    },
-    filterTextActive: {
-        color: Colors.textSecondary, // Color para el texto del filtro activo
-    },
-    filterText: {
-        color: Colors.textPrimary,
-        fontWeight: 'bold',
     },
 });
 
