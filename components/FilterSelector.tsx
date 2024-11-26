@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons'; // Cambia el paquete si usas otro set de íconos
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Colors } from '@/constants/Colors';
 
 type Filter = 'all' | 'bus' | 'subte' | 'favorites' | 'alerts';
