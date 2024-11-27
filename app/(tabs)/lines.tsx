@@ -33,7 +33,7 @@ type Agency = {
   routes: Line[];
 };
 
-type Filter = 'all' | 'bus' | 'subte' | 'favorites' | 'alerts';
+type Filter = 'bus' | 'subte' | 'favorites' | 'alerts';
 
 const Lines: React.FC = () => {
   const { useFetchAgencies } = useAPI();
@@ -41,7 +41,7 @@ const Lines: React.FC = () => {
   const [expandedLines, setExpandedLines] = useState<Record<string, boolean>>(
     {},
   );
-  const [selectedFilter, setSelectedFilter] = useState<Filter>('all');
+  const [selectedFilter, setSelectedFilter] = useState<Filter>('bus');
   const [searchQuery, setSearchQuery] = useState('');
 
   const toggleExpandLine = useCallback((lineNumber: string) => {
@@ -102,6 +102,7 @@ const Lines: React.FC = () => {
         <RenderSubwayLine
           key={`${item.agency_name}`}
           agencyName={item.agency_name}
+          route={item.routes[0]}
           agencyColor={item.agency_color}
         />
       </View>
@@ -148,9 +149,7 @@ const Lines: React.FC = () => {
         activeFilter={selectedFilter}
         onFilterChange={handleFilterChange}
       />
-      {(selectedFilter === 'all' ||
-        selectedFilter === 'bus' ||
-        selectedFilter === 'subte') && (
+      {(selectedFilter === 'bus') && (
         <SearchBar
           placeholder="Buscar línea por nombre..."
           value={searchQuery}

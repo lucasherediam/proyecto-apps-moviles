@@ -9,16 +9,18 @@ import SubwayLineBadge from './SubwayLineBadge';
 
 type RenderGroupedLineProps = {
     agencyName: string;
+    route: any;
     agencyColor: string;
 };
 
 const RenderSubwayLine: React.FC<RenderGroupedLineProps> = ({
     agencyName,
+    route,
     agencyColor,
 }) => {
     const { favoriteRoutes, toggleFavorite } = useFavorites();
-    const isFavorite = favoriteRoutes.includes(agencyName);
-    return (
+    const isFavorite = favoriteRoutes.includes(route.routes[0].lineRouteId);
+        return (
         <View style={styles.lineContainer}>
             <View key={`${agencyName}`} style={styles.routeContainer}>
                 <View>
@@ -30,7 +32,10 @@ const RenderSubwayLine: React.FC<RenderGroupedLineProps> = ({
                 </View>
                 <TouchableOpacity
                     style={styles.favoriteButton}
-                    onPress={() => {}}
+                    onPress={() => {
+                        toggleFavorite(route.routes[0].lineRouteId)
+                    }
+                    }
                 >
                     <Ionicons
                         name={isFavorite ? 'heart' : 'heart-outline'}

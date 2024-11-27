@@ -15,7 +15,6 @@ const FilterSelector = React.memo(
         const filters = [
             { id: 'alerts', icon: 'bell-outline' },
             { id: 'favorites', icon: 'heart-outline' },
-            { id: 'all', icon: 'view-dashboard-outline' },
             { id: 'bus', icon: 'bus' },
             { id: 'subte', icon: 'subway-variant' },
         ];

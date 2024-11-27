@@ -36,7 +36,7 @@ const AlertsScreen = () => {
 
     const noAlertsFound = () => (
         <View>
-            <Text style={styles.errorText}>No se encontraron llegadas</Text>
+            <Text style={styles.errorText}>No se encontraron alertas</Text>
         </View>
     );
 

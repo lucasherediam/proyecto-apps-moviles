@@ -24,7 +24,8 @@ const groupRoutesByMainPath = (
 ) => {
     const grouped: Record<string, Record<string, Line>> = {};
     routes.forEach((route) => {
-        const lineNumberMatch = route.route_short_name.match(/^\d+/);
+        const lineNumberMatch = route.route_short_name.match(/^(Linea\s+[A-Za-z\s]+|\d+)/);       
+        // console.log('lineNumberMatch', lineNumberMatch);
         if (lineNumberMatch) {
             const lineNumber = lineNumberMatch[0];
             const mainPath = route.route_desc?.split(':')[0].trim() || '';
