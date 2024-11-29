@@ -10,6 +10,10 @@ import {
 } from 'react-native';
 import useAPI from '@/hooks/useApi';
 import { Colors } from '@/constants/Colors';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
+import { RectButton } from 'react-native-gesture-handler';
+import { useFavorites } from '@/context/FavoriteContext';
 
 type Line = {
   route_id: string;
@@ -20,26 +24,41 @@ type Line = {
 const FavoritesScreen = () => {
   const { useFetchFavorites } = useAPI();
   const { data: favoriteLines, isLoading, error } = useFetchFavorites();
+  const { favoriteRoutes, toggleFavorite } = useFavorites();
 
   // Manejo de error al cargar las líneas favoritas
   if (error) {
     Alert.alert('Error', 'Hubo un problema al conectar con la API.');
   }
 
-  // Renderizar cada línea favorita con los datos del backend
-  const renderFavoriteItem = ({ item }: { item: Line }) => (
-    <View style={styles.favoriteItem}>
-      <Text style={styles.routeName}>
-        {item.route_short_name.includes('Linea')
-          ? item.route_short_name
-          : `Linea ${item.route_short_name}`}
-      </Text>
-      <Text style={styles.routeDesc}>
-        {item.route_desc || 'Sin descripción'}
-      </Text>
-    </View>
+  const renderLeftActions = (lineRouteId: string) => (
+    <RectButton
+      style={styles.deleteButton}
+      onPress={() => toggleFavorite(lineRouteId)}
+    >
+      <Text style={styles.deleteButtonText}>Eliminar</Text>
+    </RectButton>
   );
 
+  // Renderizar cada línea favorita con los datos del backend
+  const renderFavoriteItem = ({ item }: { item: Line }) => (
+    <View>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <Swipeable renderLeftActions={() => renderLeftActions(item.route_id)}>
+          <View style={styles.favoriteItem}>
+            <Text style={styles.routeName}>
+              {item.route_short_name.includes('Linea')
+                ? item.route_short_name
+                : `Linea ${item.route_short_name}`}
+            </Text>
+            <Text style={styles.routeDesc}>
+              {item.route_desc || 'Sin descripción'}
+            </Text>
+          </View>
+        </Swipeable>
+      </GestureHandlerRootView>
+    </View>
+  );
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Favoritos</Text>
@@ -91,6 +110,19 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: 'center',
     marginTop: 20,
+  },
+  deleteButton: {
+    padding: 10,
+    backgroundColor: Colors.danger,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 100,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  deleteButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
 

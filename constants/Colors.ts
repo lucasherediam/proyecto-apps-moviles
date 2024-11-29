@@ -24,6 +24,7 @@ const Colors = {
     hover: '#6200ea', // Ajustado
     link: '#82b1ff',
     white: '#ffffff',
+    danger: '#FF4D4D',
 
     // Social Media Colors
     google: '#db4437',
