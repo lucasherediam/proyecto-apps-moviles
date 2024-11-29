@@ -70,7 +70,7 @@ const Lines: React.FC = () => {
           routes: agency.routes.filter((route) =>
             route.lineNumber
               ?.toLowerCase()
-              .includes(searchQuery.toLowerCase().trim()),
+              .startsWith(searchQuery.toLowerCase().trim()),
           ),
         }))
         .filter((agency) => agency.routes.length > 0); 
