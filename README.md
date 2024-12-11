@@ -1,3 +1,12 @@
+> [!IMPORTANT]
+> Para el correcto funcionamiento de la aplicacion se tiene que crear un archivo .env y colocar la direccion IP del server donde corre el backend.  
+> Ejemplo:  
+> EXPO_PUBLIC_BACKEND_URL=http://192.168.1.1:3000  
+
+
+> [!NOTE]
+> A partir de acá es el README predeterminado de expo
+>   
 # Welcome to your Expo app 👋
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
