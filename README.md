@@ -1,7 +1,9 @@
 > [!IMPORTANT]
-> Para el correcto funcionamiento de la aplicacion se tiene que crear un archivo .env y colocar la direccion IP del server donde corre el backend.  
+> Para el correcto funcionamiento de la aplicacion se tiene que:
+> - Crear un archivo .env y colocar la direccion IP del server donde corre el backend.  
 > Ejemplo:  
-> EXPO_PUBLIC_BACKEND_URL=http://192.168.1.1:3000  
+> EXPO_PUBLIC_BACKEND_URL=http://192.168.1.1:3000
+> - Instalar los node modules  
 
 
 > [!NOTE]
