@@ -21,7 +21,7 @@ const StationHeader: React.FC<StationHeaderProps> = ({
                     { backgroundColor: color || Colors.primary },
                 ]}
             >
-                <Text style={styles.headerTitle}>Próximas llegadas</Text>
+                <Text style={styles.headerTitle}>{name}</Text>
             </View>
         </Pressable>
     );

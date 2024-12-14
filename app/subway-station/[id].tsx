@@ -78,7 +78,7 @@ export default function StationDetails() {
     useLayoutEffect(() => {
         if (station) {
             navigation.setOptions({
-                title: `${name}`,
+                title: `Volver`,
             });
         }
     }, [station, navigation]);
