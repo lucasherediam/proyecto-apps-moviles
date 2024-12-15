@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
         shadowRadius: 4,
-        elevation: 5, // Para la sombra en Android
+        elevation: 5, 
     },
     animatedText: {
         color: Colors.textPrimary,

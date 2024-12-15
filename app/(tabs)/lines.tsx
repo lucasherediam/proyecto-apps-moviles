@@ -16,7 +16,7 @@ import AlertsScreen from '@components/screens/AlertsScreen';
 import { Colors } from '@constants/Colors';
 import RenderSubwayLine from '@components/RenderSubwayLine';
 import { Screen } from '@/components/Screen';
-import SearchBar from '@components/SearchBar'; // Asegúrate de tener el componente
+import SearchBar from '@components/SearchBar'; 
 
 type Line = {
   lineNumber: string;
